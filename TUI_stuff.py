@@ -5,35 +5,32 @@ import requests
 import npyscreen
 
 
-#cd Documents\4th sem\IDS\hand-in
 
-# Returns string with the stuff we want to search for.
+
+# Returns a list of jobs based on the search terms (kwargs) given
 def search(**kwargs):
     payload = ""
-    for key, value in kwargs.items():
-        payload += "{}={}".format(str(key),value)
-        payload += "&"
-    payload = payload.rstrip(payload[-1])
-    url_ = "https://jobs.github.com/positions.json?"
-    r = requests.get(url = url_ + payload) 
-    response = r.json() 
-    response = checkMorePages(response, url_, payload)
+    for key, value in kwargs.items():                   # Goes through the keyword arguments
+        payload += "{}={}&".format(key,value)           # formats the key for the search and the search choice so the string can be added to the url later
+    payload = payload.rstrip(payload[-1])               # Removes the last &
+    url_ = "https://jobs.github.com/positions.json?"    # The "base" part of the API address
+    r = requests.get(url = url_ + payload)              # Gettings the API data
+    response = r.json()                                 # Convers the json file into a list
+    response = checkMorePages(response, url_, payload)  # Checks if there are more pages (see report for more info)
     return response
 
+# The API can only give 50 responses at a time, so we may need to check more pages. See report for more.
 def checkMorePages(response, url_, search_choice):
-    size = 50
-    pages = 2   
-    more_pages = len(response) >= size and pages < 6
-    while (more_pages):
-        url__ = url_  + search_choice + '&page=' + str(pages)
-        print(url__)
-        r = requests.get(url = url__) 
-
-        response = response + r.json()
-
+    size = 50                                                   # First time checking should only happen if it seems we reached max for the first page
+    pages = 2                                                   # Starts at page 1, so we check second page
+    more_pages = len(response) >= size and pages < 10           # Should check more pages if there are 50 responses
+    while (more_pages):                                         # Continuously checks if we need to access more pages
+        url__ = url_  + search_choice + '&page=' + str(pages)   # Contatinating url such that it can check different page numbers 
+        r = requests.get(url = url__)                           # Getting API data
+        response = response + r.json()                          # Appends the previous response with the most recent page. 
         pages += 1
         size += 50
-        more_pages = len(response) >= size and pages < 6
+        more_pages = len(response) >= size and pages < 10       # Updates loop ***REQUIREMENT**??? word??
     return response
 
 
@@ -48,27 +45,24 @@ how we worked???
 
 class App(npyscreen.NPSAppManaged):
     def onStart(self):
-        npyscreen.setTheme(npyscreen.Themes.ColorfulTheme)
-        #add forms to the application
-        self.addForm('MAIN',      getInput,           name = "Enter locations")
+        npyscreen.setTheme(npyscreen.Themes.ColorfulTheme)              # Setting cute color theme
+        # Adding all forms to the app
+        self.addForm('MAIN',      getInputForm,       name = "Enter locations")
         self.addForm('NO_JOBS',   NoJobsForm,         name = "Error - no jobs")
         self.addForm('SHOW_JOBS', DisplayJobsForm,    name = "Job titles")
         self.addForm('JOB_INFO',  JobInformationForm, name = "info")
 
-class getInput(npyscreen.ActionFormMinimal):
+# Form that asks user to give a location and optional search keyword for finding a job
+class getInputForm(npyscreen.ActionFormMinimal):
     def create (self):
         self.add(npyscreen.TitleText, w_id="locationText",    name = "Enter a location:")
-        self.add(npyscreen.TitleText, w_id="descriptionText", name = "Enter optional discription:")
-   
- 
+        self.add(npyscreen.TitleText, w_id="descriptionText", name = "Enter optional keyword:")
     def afterEditing(self):
-        
         self.jobs_list = []
         self.returner  = []
-    
-        self.mess1 = self.get_widget("locationText").value
-        self.mess2 = self.get_widget("descriptionText").value
-        self.response = search(location = self.mess1, search = self.mess2)
+        self.location_input  = self.get_widget("locationText").value
+        self.keywords_inputs = self.get_widget("descriptionText").value
+        self.response        = search(location = self.location_input, search = self.keywords_inputs)
         for resp in self.response:
             self.jobs_list.append(resp)
             self.returner.append(resp['title'])
