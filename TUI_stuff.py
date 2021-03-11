@@ -10,14 +10,11 @@ import npyscreen
 # Returns string with the stuff we want to search for.
 def search(**kwargs):
     payload = ""
-    print(f"kwargs: {kwargs}")
     for key, value in kwargs.items():
         payload += "{}={}".format(str(key),value)
         payload += "&"
-        print(f'Payload: {payload}')
-    print(f'Payload: {payload}')
     payload = payload.rstrip(payload[-1])
-    print(f'Payload: {payload}')
+
     return payload
         
 def checkMorePages(response, url_, search_choice):
@@ -67,33 +64,79 @@ class App(npyscreen.NPSAppManaged):
 class getInput(npyscreen.ActionFormMinimal):
     def create (self):
         self.add(npyscreen.TitleText, w_id="titelText", name = "Enter a location:")
+        print("TEST")
         self.returner = []
-        #self.add(npyscreen.ButtonPress, name="OK", when_pressed_function=self.btn_press)
+        self.jobs_list = []
 
     def afterEditing(self):
+    #def edit(self):
+        
+        self.jobs_list = []
+        self.returner = []
         self.mess = self.get_widget("titelText").value
-        print(f"message: {self.mess}")
         self.response = getAPI(self.mess)
         for resp in self.response:
+            self.jobs_list.append(resp)
             self.returner.append(resp['title'])
-        self.parentApp.switchForm('SHOW_JOBS')
-        self.parentApp.getForm('SHOW_JOBS').jobs.values = self.returner
-    def on_ok(self):
-        self.parentApp.switchForm('SHOW_JOBS')
+        
+        #self.parentApp.switchForm('SHOW_JOBS')
+        self.parentApp.getForm('SHOW_JOBS').job.values = self.returner
 
-class DisplayJobsForm(npyscreen.ActionFormMinimal):
+
+    
+    def on_ok(self):
+        self.parentApp.setNextForm("SHOW_JOBS")
+        #self.parentApp.switchForm('SHOW_JOBS')
+
+class DisplayJobsForm(npyscreen.ActionForm):
     def create (self):
-        self.jobs = self.add(npyscreen.TitleSelectOne, scroll_exit=True, max_height=10,  name='Jobs')
+        self.job = self.add(npyscreen.TitleSelectOne, scroll_exit=True, max_height=10,  name='Jobs')
+        self.chosen_job =  [] #self.parentApp.getForm('MAIN').jobs_list[self.job.value[0]]
+        
         self.add(npyscreen.ButtonPress, name="OK", when_pressed_function=self.btn_press)
+        self.add(npyscreen.TitleText, name="Press CTRL + T")
+        self.add_handlers({"^T": self.handler})
+    def handler(self, *args, **keywords):
+        self.parentApp.setNextForm(None)
+
+    def afterEditing(self):
+        if self.job.value:
+            self.chosen_job =  self.parentApp.getForm('MAIN').jobs_list[self.job.value[0]]
+            
+            self.parentApp.getForm('JOB_INFO').job_company.value = self.chosen_job['company']
+            self.parentApp.getForm('JOB_INFO').job_title.value = self.chosen_job['title']
+            self.parentApp.getForm('JOB_INFO').job_location.value = self.chosen_job['location']
+            self.parentApp.getForm('JOB_INFO').job_url.value = self.chosen_job['url']
+        #self.parentApp.getForm('JOB_INFO').job_how_to_apply.value = chosen_job['how_to_apply']
+
+    def on_cancel(self):
+        #self.parentApp.switchFormPrevious()
+        self.parentApp.setNextForm('MAIN')
+         
     def btn_press(self):
-        npyscreen.notify_confirm(self.jobs, title="Jobs")
+        self.parentApp.setNextForm('JOB_INFO')
+        #npyscreen.notify_confirm(self.jobs, title="Jobs")
     def on_ok(self):
-        self.parentApp.switchForm(None)
+        self.parentApp.setNextForm("JOB_INFO")
+        #self.parentApp.switchForm('JOB_INFO')
 
 
-class JobInformationForm(npyscreen.ActionFormMinimal):
-    def create():
-        self.job_info = self.add(npyscreen.TitleText, name = "Job discription", value = )
+class JobInformationForm(npyscreen.ActionPopup):
+    def create(self):
+        #self.display = self.add(npyscreen.FixedText, name = "display", value = "Job description for ")
+        self.job_company = self.add(npyscreen.TitleText, name = "Company: ")
+        self.job_title = self.add(npyscreen.TitleText, name = "Job title: ")
+        self.job_location = self.add(npyscreen.TitleText, name = "Location: ")
+        self.job_url = self.add(npyscreen.TitleText, name = "Job URL: ")
+        #self.job_how_to_apply = self.add(npyscreen.TitleText, name = "How to apply: ")
+
+    def on_cancel(self):
+        self.parentApp.setNextForm("SHOW_JOB")
+
+    
+    def on_ok(self):
+        self.parentApp.setNextForm(None)
+     
 
 app = App()
 app.run()
