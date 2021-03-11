@@ -10,11 +10,14 @@ import npyscreen
 # Returns string with the stuff we want to search for.
 def search(**kwargs):
     payload = ""
+    print(f"kwargs: {kwargs}")
     for key, value in kwargs.items():
         payload += "{}={}".format(str(key),value)
         payload += "&"
+        print(f'Payload: {payload}')
+    print(f'Payload: {payload}')
     payload = payload.rstrip(payload[-1])
-
+    print(f'Payload: {payload}')
     return payload
         
 def checkMorePages(response, url_, search_choice):
@@ -34,8 +37,8 @@ def checkMorePages(response, url_, search_choice):
         more_pages = len(response) >= size and pages < 6
     return response
     
-def getAPI(message):
-    searching = search(location = message)
+def getAPI(loc):
+    searching = search(location = loc)
     url_ = "https://jobs.github.com/positions.json?"
     r = requests.get(url = url_ + searching) 
     response = r.json() 
@@ -59,40 +62,38 @@ class App(npyscreen.NPSAppManaged):
         #add forms to the application
         self.addForm('MAIN', getInput, name="Enter locations")
         self.addForm('SHOW_JOBS', DisplayJobsForm, name="Job titles")
+        self.addForm('JOB_INFO', JobInformationForm, name="info")
 
 class getInput(npyscreen.ActionFormMinimal):
     def create (self):
         self.add(npyscreen.TitleText, w_id="titelText", name = "Enter a location:")
-
+        self.returner = []
         #self.add(npyscreen.ButtonPress, name="OK", when_pressed_function=self.btn_press)
-        self.mess = self.get_widget("titelText").value
+
     def afterEditing(self):
-        response = getAPI(self.mess)
-        returner = ""
-        for resp in response:
-            returner = returner + resp['title']
-            returner += "\n"
+        self.mess = self.get_widget("titelText").value
+        print(f"message: {self.mess}")
+        self.response = getAPI(self.mess)
+        for resp in self.response:
+            self.returner.append(resp['title'])
         self.parentApp.switchForm('SHOW_JOBS')
-        self.parentApp.getForm('SHOW_JOBS').response.value = response
+        self.parentApp.getForm('SHOW_JOBS').jobs.values = self.returner
     def on_ok(self):
         self.parentApp.switchForm('SHOW_JOBS')
 
 class DisplayJobsForm(npyscreen.ActionFormMinimal):
     def create (self):
-        self.response = self.add(npyscreen.TitleText, name="Chosen city:",     editable=False)
-
-        #self.add(npyscreen.TitleText, w_id="titelText", name = "Enter a city:")
+        self.jobs = self.add(npyscreen.TitleSelectOne, scroll_exit=True, max_height=10,  name='Jobs')
         self.add(npyscreen.ButtonPress, name="OK", when_pressed_function=self.btn_press)
-        self.jobs = self.add(npyscreen.TitleSelectOne, scroll_exit=True, max_height=3, name='Department', values=self.response)
     def btn_press(self):
-        response = getAPI(self.message)
-        returner = ""
-        for resp in response:
-            returner = returner + resp['title']
-            returner += "\n"
-        npyscreen.notify_confirm(returner, title="Jobs", wrap=True, wide=True, editw=1)
+        npyscreen.notify_confirm(self.jobs, title="Jobs")
     def on_ok(self):
         self.parentApp.switchForm(None)
+
+
+class JobInformationForm(npyscreen.ActionFormMinimal):
+    def create():
+        self.job_info = self.add(npyscreen.TitleText, name = "Job discription", value = )
 
 app = App()
 app.run()
