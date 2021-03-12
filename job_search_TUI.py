@@ -29,16 +29,6 @@ size = 50
 pages = 2   
 more_pages = len(response) >= size and pages < 6
 print(len(response))
-while (more_pages):
-    url__ = url_  + searching + '&page=' + str(pages)
-    print(url__)
-    r = requests.get(url = url__) 
-
-    response = response + r.json()
-    pages += 1
-    size += 50
-    more_pages = len(response) >= size and pages < 6
-
 
 for q in range(len(response)):
     print(response[q]['title'])
@@ -51,5 +41,6 @@ fix to search multiple pages if length returns 50
 
 """
 
+print(type(response))
 
 print("done")
