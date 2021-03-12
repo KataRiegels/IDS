@@ -1,6 +1,6 @@
 
 
-import json, requests, npyscreen
+import json, requests, npyscreen, curses
 
 
 #----------- Functions used to get API responses ------------------------------------------- 
@@ -43,13 +43,20 @@ class App(npyscreen.NPSAppManaged):
         self.addForm('NO_JOBS',   NoJobsForm,         name = "Error - no jobs")
         self.addForm('SHOW_JOBS', DisplayJobsForm,    name = "Job titles")
         self.addForm('JOB_INFO',  JobInformationForm, name = "info")
+    def exit(self):
+        self.switchForm(None)
 
 # Form that asks user to give a location and optional search keyword for finding a job
 class getInputForm(npyscreen.ActionFormMinimal):
     def create (self):
-        self.add(npyscreen.TitleText, w_id="locationText",    name = "Enter a location:")                  # Widget for taking location user input
-        self.add(npyscreen.TitleText, w_id="descriptionText", name = "Enter optional keyword:")            # Widget for taking extra keyword user input
-    def afterEditing(self):
+        self.add(npyscreen.TitleText, w_id="locationText",    name = "Enter a location:           ")     # Widget for taking location user input
+        self.add(npyscreen.TitleText, w_id="descriptionText", name = "Enter optional keywords:    ")     # Widget for taking extra keyword user input
+        self.add(npyscreen.ButtonPress, name="Continue", when_pressed_function=self.contin_btn)
+ 
+
+    def contin_btn(self, *args, **kwargs):
+    #Documents\4th sem\IDS\Hand-in\IDS\
+    #def afterEditing(self):
         self.jobs_list        = []                                                                         # Creating (and resetting) empty list of jobs
         self.job_list_titles  = []                                                                         # Creating (and resetting) empty list of titles from the jobs
         self.location_input  = self.get_widget("locationText").value                                       # Getting location input from user
@@ -59,10 +66,14 @@ class getInputForm(npyscreen.ActionFormMinimal):
             self.jobs_list.append(resp)                                                                         # List with dictionaries for all response jobs
             self.job_list_titles.append(resp['title'])                                                          # List with values for the 'title' key for all response jobs
         if len(self.jobs_list) < 1:                                                                        # If no jobs were found
-            self.parentApp.setNextForm("NO_JOBS")                                                               # Show error popup saying there are no jobs
-        self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             # Settings the values of the job list widget
+            self.parentApp.switchForm("NO_JOBS")                                                               # Show error popup saying there are no jobs
+        else:
+            self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             # Settings the values of the job list widget
+            self.parentApp.switchForm("SHOW_JOBS")
     def on_ok(self):
-        self.parentApp.setNextForm("SHOW_JOBS")                                                            # Go to form that show list of available jobs               
+        self.parentApp.exit()
+        #self.parentApp.setNextForm(None)
+        #self.parentApp.setNextForm("SHOW_JOBS")                                                            # Go to form that show list of available jobs               
     
 
 # Form that will display the jobs that match search criteria and saves information about a job the user wants to see
@@ -70,22 +81,32 @@ class DisplayJobsForm(npyscreen.ActionForm):
     def create (self):
         self.jobs       = self.add(npyscreen.TitleSelectOne, scroll_exit=True, max_height=11,  name='Jobs') # Widget that allows user to see and pick available jobs
         self.chosen_job =  []                                                                               # Creating empty chosen job list
-    def afterEditing(self):
+        self.add(npyscreen.ButtonPress, name="Continue", when_pressed_function = self.btn_press)
+        self.add(npyscreen.ButtonPress, name="Return",   when_pressed_function = self.return_btn, rely = -5)
+
+    def return_btn(self, *args, **kwargs):
+        self.parentApp.switchFormPrevious()
+
+    def btn_press(self, *args, **kwargs):
+    #def afterEditing(self):
         if self.jobs.value:                                                                         # If there were actually any jobs
             self.chosen_job =  self.parentApp.getForm('MAIN').jobs_list[self.jobs.value[0]]             # Saving dictionary for chosen job
             self.parentApp.getForm('JOB_INFO').job_company.value = self.chosen_job['company']           # sets chosen company value
             self.parentApp.getForm('JOB_INFO').job_title.value = self.chosen_job['title']               # Sets chosen title value
             self.parentApp.getForm('JOB_INFO').job_location.value = self.chosen_job['location']         # Sets location value
             self.parentApp.getForm('JOB_INFO').job_url.value = self.chosen_job['url']                   # Sets github url value
+            self.parentApp.switchForm('JOB_INFO')
+        # else what?   
     def on_cancel(self):
         self.parentApp.setNextForm('MAIN')                                                              # Cancelling take user back to search form
     def on_ok(self):
-        self.parentApp.setNextForm("JOB_INFO")                                                          # Ok continues to show job info about chosen job
+        self.parentApp.exit()
+        #self.parentApp.setNextForm("JOB_INFO")                                                          # Ok continues to show job info about chosen job
 
 # Popup in case there were no jobs matching the search criteria
 class NoJobsForm(npyscreen.ActionPopup):
     def create(self):
-        self.job_company = self.add(npyscreen.FixedText, name = "Error", value = "No jobs found :-( ")
+        self.job_company = self.add(npyscreen.FixedText, name = "Error", value = "No jobs found :-( Try with other search terms", editable = False)
     def on_ok(self):
         self.parentApp.setNextForm("MAIN")
     def on_cancel(self):
@@ -95,14 +116,20 @@ class NoJobsForm(npyscreen.ActionPopup):
 class JobInformationForm(npyscreen.ActionPopupWide):
     def create(self):
         # Widgets that will display the values assigned in DisplayJobsForm
-        self.job_company  = self.add(npyscreen.TitleText, name = "Company: ")
-        self.job_title    = self.add(npyscreen.TitleText, name = "Job title: ")
-        self.job_location = self.add(npyscreen.TitleText, name = "Location: ")
-        self.job_url      = self.add(npyscreen.TitleText, name = "Job URL: ")
+        self.job_company  = self.add(npyscreen.TitleText, name = "Company: ",   editable = False)
+        self.job_title    = self.add(npyscreen.TitleText, name = "Job title: ", editable = False)
+        self.job_location = self.add(npyscreen.TitleText, name = "Location: ",  editable = False)
+        self.job_url      = self.add(npyscreen.TitleFixedText, name = "Job URL: ")
+        self.add(npyscreen.ButtonPress, name="Return", when_pressed_function=self.return_btn, rely = 10)
+
+    def return_btn(self, *args, **kwargs):
+        self.parentApp.switchFormPrevious()
+
     def on_cancel(self):                                                            # Go back to choose another job
         self.parentApp.setNextForm("SHOW_JOBS")
     def on_ok(self):
-        self.parentApp.setNextForm(None)                                            # Leave the application
+        self.parentApp.exit()
+        #self.parentApp.setNextForm(None)                                            # Leave the application
      
 
 app = App()
