@@ -64,15 +64,54 @@ def move_ok_button(self):
 
 """
 
-def testing(self):
-    
+# Functions that can find the max x and y for a Form
+def max_dim(self):
+     my, mx = self.curses_pad.getmaxyx()
+     return my,mx
+
+# Function that will return the position a widget should be placed if wanted placed in the middle
+def half_dim(self, widget):
+    halfy = max_dim(self)[0]/2
+    halfx = max_dim(self)[1]/2
+    pos_halfy = round(halfy-len(widget)/2)
+    pos_halfx = round(halfx-len(widget[0][0])/2)
+    return pos_halfx, pos_halfy
+
+
+class DefaultTheme(nps.ThemeManager):
+    default_colors = {
+    'DEFAULT'     : 'MAGENTA_BLACK',
+    'FORMDEFAULT' : 'WHITE_BLACK',
+    'NO_EDIT'     : 'BLUE_BLACK',
+    'STANDOUT'    : 'CYAN_BLACK',
+    'CURSOR'      : 'WHITE_BLACK',
+    'CURSOR_INVERSE': 'BLACK_WHITE',
+    'LABEL'       : 'GREEN_BLACK',
+    'LABELBOLD'   : 'WHITE_BLACK',
+    'CONTROL'     : 'YELLOW_BLACK',
+    'IMPORTANT'   : 'GREEN_BLACK',
+    'SAFE'        : 'GREEN_BLACK',
+    'WARNING'     : 'YELLOW_BLACK',
+    'DANGER'      : 'RED_BLACK',
+    'CRITICAL'    : 'BLACK_RED',
+    'GOOD'        : 'GREEN_BLACK',
+    'GOODHL'      : 'GREEN_BLACK',
+    'VERYGOOD'    : 'BLACK_GREEN',
+    'CAUTION'     : 'YELLOW_BLACK',
+    'CAUTIONHL'   : 'MAGENTA_BLACK',
+    }
+
+
+
 
 
 # -------------- App and Forms for the TUI -----------------------------------------
 
 class App(nps.NPSAppManaged):
     def onStart(self):
-        nps.setTheme(nps.Themes.ColorfulTheme)              # Setting cute color theme
+        #nps.setTheme(nps.Themes.ColorfulTheme)              # Setting cute color theme
+        nps.setTheme(DefaultTheme)              # Setting cute color theme
+
         # Adding all forms to the app
         self.addForm('MAIN',      getInputForm,       name = "Enter locations")
         self.addForm('NO_JOBS',   NoJobsForm,         name = "Error - no jobs")
@@ -85,15 +124,12 @@ class App(nps.NPSAppManaged):
 class getInputForm(nps.ActionFormMinimal):
     def create (self):
         self.form_art = ascii_art("computer_ascii")
-        print(len(self.form_art[0][0]))
-        my, mx = self.curses_pad.getmaxyx()
-        print(mx)
-        self.add(nps.FixedText, w_id="locationTexta",    name = str(my)) 
+        halfx, halfy = half_dim(self, self.form_art)
+
         self.add(nps.TitleText, w_id="locationText",    name = "Enter a location:           ", use_two_lines = False, begin_entry_at=30)     # Widget for taking location user input
-        self.add(nps.TitleText, w_id="descriptionText", name = "Enter optional keywords:    ", use_two_lines = False, begin_entry_at=30)     # Widget for taking extra keyword user input
-        self.add(nps.SimpleGrid, values = self.form_art, columns_width = 100, columns = 1, editable = False, rely = -len(self.form_art), relx = round(mx/2-len(self.form_art[0][0])/2 ) )
+        self.add(nps.TitleText, w_id="descriptionText", name = "Enter optional keywords:    ", use_two_lines = False, begin_entry_at=30, color = "CAUTION")     # Widget for taking extra keyword user input
+        self.add(nps.SimpleGrid, values = self.form_art, columns_width = 100, columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art), relx = halfx)
         self.add(nps.ButtonPress, name="Continue", when_pressed_function=self.contin_btn, rely = -5, relx = -15)
-        print(self.get_widget(   "locationText").value)
 
 
     def contin_btn(self, *args, **kwargs):
