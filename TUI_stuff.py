@@ -116,8 +116,8 @@ class App(nps.NPSAppManaged):
         self.addForm('MAIN',      getInputForm,       name = "Enter locations")
         self.addForm('NO_JOBS',   NoJobsForm,         name = "Error - no jobs")
         self.addForm('SHOW_JOBS', DisplayJobsForm,    name = "Job titles")
-        self.addForm('JOB_INFO',  JobInformationForm, name = "info")
-        self.addForm('NO_JOB_SELECTED', NoSelectedJob, name = "Error - no job selected")
+        self.addForm('JOB_INFO',  JobInformationForm, name = "Job information")
+        self.addForm('NO_JOB_SELECTED', NoSelectedJobForm, name = "Error - no job selected")
     def exit(self):
         self.switchForm(None)
 
@@ -164,7 +164,7 @@ class DisplayJobsForm(nps.ActionForm):
         self.add(nps.ButtonPress, name="Return",   when_pressed_function = self.return_btn, rely = -5, color = "DANGER")
 
     def return_btn(self):
-        self.parentApp.switchFormPrevious()
+        self.parentApp.switchForm('MAIN')
 
     def contin_btn(self):
     #def afterEditing(self):
@@ -188,7 +188,7 @@ class DisplayJobsForm(nps.ActionForm):
 # Popup in case there were no jobs matching the search criteria
 class NoJobsForm(nps.ActionPopup):
     def create(self):
-        self.job_company = self.add(nps.FixedText, name = "Error", value = "No jobs found :-( Try with other search terms", editable = False)
+        self.job_company = self.add(nps.MultiLineEdit, name = "Error", value = "No jobs found :-(\nTry again with other search terms.", editable = False)
     def on_ok(self):
         self.parentApp.setNextForm("MAIN")
     def on_cancel(self):
@@ -219,15 +219,16 @@ class JobInformationForm(nps.ActionPopupWide):
     def on_ok(self):
         self.parentApp.exit()
         #self.parentApp.setNextForm(None)                                            # Leave the application
-    
-class NoSelectedJob(nps.ActionPopup):
+
+# Popup in case continue was pressed but no job was selected
+class NoSelectedJobForm(nps.ActionPopup):
     def create(self):
-        self.add(nps.FixedText, name = 'Error', value = "No job selected. \n Please select a job for information.", editable = False)
+        self.add(nps.MultiLineEdit, name = 'Error', value = "No job selected.\nPlease select a job for more information.", editable = False)
         #self.add(nps.ButtonPress, name="ok", when_pressed_function = self.ok_btn, rely = -10)
     def on_ok(self):
         self.parentApp.setNextForm("SHOW_JOBS")
     def ok_cancel(self):
-        self.parentApp.setNextForm('SHOW_JOBS')
+        self.parentApp.switchForm('SHOW_JOBS')
 
 app = App()
 app.run()
@@ -244,7 +245,7 @@ TO-DO
 - Error handling
 -> not selecting a job and pressing Continue makes it crash (fixed)
 -> selection index is saved when you cancel the search and search for a new location (fixed)
--> return vs. cancel button, continue/OK button
+-> return vs. cancel button, continue vs. OK button
 -> searching for java and then python gives less results than searching for python, same with searching for location after python
 -> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why
 -> copying the url makes it crash
