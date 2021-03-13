@@ -206,7 +206,7 @@ class JobInformationForm(nps.ActionPopupWide):
         self.add(nps.ButtonPress, name="Return", when_pressed_function=self.return_btn, rely = 10, color = "DANGER")
 
         self.add_handlers({"^C": self.handler})
-    def handler(self):
+    def handler(self, *args, **keywords):
         pyperclip.copy(self.job_url.value)
         spam = pyperclip.paste()
 
@@ -248,7 +248,7 @@ TO-DO
 -> return vs. cancel button, continue vs. OK button
 -> searching for java and then python gives less results than searching for python, same with searching for location after python
 -> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why (fixed)
--> copying the url makes it crash
+-> copying the url makes it crash (fixed)
 
 - write report
 
