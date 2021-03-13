@@ -179,7 +179,7 @@ class DisplayJobsForm(nps.ActionForm):
         else:
             self.parentApp.switchForm('NO_JOB_SELECTED')
     def on_cancel(self):
-        self.jobs = []
+        #self.jobs = []
         self.parentApp.setNextForm('MAIN')                                                              # Cancelling takes user back to search form
     def on_ok(self):
         self.parentApp.exit()
