@@ -146,7 +146,7 @@ class getInputForm(nps.ActionFormMinimal):
             self.parentApp.switchForm("NO_JOBS")                                                               # Show error popup saying there are no jobs
         else:
             self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             # Setting the values of the job list widget
-            self.parentApp.getForm('SHOW_JOBS').jobs.value = None
+            self.parentApp.getForm('SHOW_JOBS').jobs.value = []
             self.parentApp.getForm('SHOW_JOBS').chosen_job = []
             self.parentApp.switchForm("SHOW_JOBS")
     def on_ok(self):
@@ -245,7 +245,7 @@ TO-DO
 - Error handling
 -> not selecting a job and pressing Continue makes it crash (fixed)
 -> selection index is saved when you cancel the search and search for a new location (fixed)
--> return vs. cancel button, continue vs. OK button
+-> return vs. cancel button (return goes to previous form, cancel ), continue vs. OK button
 -> searching for java and then python gives less results than searching for python, same with searching for location after python
 -> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why (fixed)
 -> copying the url makes it crash (fixed)
