@@ -147,7 +147,7 @@ class getInputForm(nps.ActionFormMinimal):
         else:
             self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             # Setting the values of the job list widget
             self.parentApp.getForm('SHOW_JOBS').jobs.value = None
-            self.parentApp.getForm('SHOW_JOBS').chosen_job = None
+            self.parentApp.getForm('SHOW_JOBS').chosen_job = []
             self.parentApp.switchForm("SHOW_JOBS")
     def on_ok(self):
         self.parentApp.exit()
@@ -159,7 +159,7 @@ class getInputForm(nps.ActionFormMinimal):
 class DisplayJobsForm(nps.ActionForm):
     def create (self):
         self.jobs       = self.add(nps.TitleSelectOne, scroll_exit=True, max_height=11,  name='Jobs') # Widget that allows user to see and pick available jobs
-        self.chosen_job =  None                                                                               # Creating empty chosen job list
+        self.chosen_job =  []                                                                               # Creating empty chosen job list
         self.add(nps.ButtonPress, name="Continue", when_pressed_function = self.contin_btn, rely = -10)
         self.add(nps.ButtonPress, name="Return",   when_pressed_function = self.return_btn, rely = -5, color = "DANGER")
 
@@ -179,7 +179,7 @@ class DisplayJobsForm(nps.ActionForm):
         else:
             self.parentApp.switchForm('NO_JOB_SELECTED')
     def on_cancel(self):
-        self.jobs = None
+        self.jobs = []
         self.parentApp.setNextForm('MAIN')                                                              # Cancelling takes user back to search form
     def on_ok(self):
         self.parentApp.exit()
