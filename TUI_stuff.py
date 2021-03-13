@@ -146,6 +146,8 @@ class getInputForm(nps.ActionFormMinimal):
             self.parentApp.switchForm("NO_JOBS")                                                               # Show error popup saying there are no jobs
         else:
             self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             # Setting the values of the job list widget
+            self.parentApp.getForm('SHOW_JOBS').jobs.value = None
+            self.parentApp.getForm('SHOW_JOBS').chosen_job = None
             self.parentApp.switchForm("SHOW_JOBS")
     def on_ok(self):
         self.parentApp.exit()
@@ -157,7 +159,7 @@ class getInputForm(nps.ActionFormMinimal):
 class DisplayJobsForm(nps.ActionForm):
     def create (self):
         self.jobs       = self.add(nps.TitleSelectOne, scroll_exit=True, max_height=11,  name='Jobs') # Widget that allows user to see and pick available jobs
-        self.chosen_job =  []                                                                               # Creating empty chosen job list
+        self.chosen_job =  None                                                                               # Creating empty chosen job list
         self.add(nps.ButtonPress, name="Continue", when_pressed_function = self.contin_btn, rely = -10)
         self.add(nps.ButtonPress, name="Return",   when_pressed_function = self.return_btn, rely = -5, color = "DANGER")
 
@@ -169,6 +171,7 @@ class DisplayJobsForm(nps.ActionForm):
         if self.jobs.value:                                                                             # If there were actually any jobs
             self.chosen_job =  self.parentApp.getForm('MAIN').jobs_list[self.jobs.value[0]]             # Saving dictionary for chosen job
             self.parentApp.getForm('JOB_INFO').job_company.value = self.chosen_job['company']           # sets chosen company value
+            #print(self.chosen_job)
             self.parentApp.getForm('JOB_INFO').job_title.value = self.chosen_job['title']               # Sets chosen title value
             self.parentApp.getForm('JOB_INFO').job_location.value = self.chosen_job['location']         # Sets location value
             self.parentApp.getForm('JOB_INFO').job_url.value = self.chosen_job['url']                   # Sets github url value
@@ -176,7 +179,8 @@ class DisplayJobsForm(nps.ActionForm):
         else:
             self.parentApp.switchForm('NO_JOB_SELECTED')
     def on_cancel(self):
-        self.parentApp.setNextForm('MAIN')                                                              # Cancelling take user back to search form
+        self.jobs = None
+        self.parentApp.setNextForm('MAIN')                                                              # Cancelling takes user back to search form
     def on_ok(self):
         self.parentApp.exit()
         #self.parentApp.setNextForm("JOB_INFO")                                                          # Ok continues to show job info about chosen job
@@ -218,7 +222,7 @@ class JobInformationForm(nps.ActionPopupWide):
     
 class NoSelectedJob(nps.ActionPopup):
     def create(self):
-        self.add(nps.FixedText, name = 'Error', value = "No job selected. \n Please select a job to view more information.", editable = False)
+        self.add(nps.FixedText, name = 'Error', value = "No job selected. \n Please select a job for information.", editable = False)
         #self.add(nps.ButtonPress, name="ok", when_pressed_function = self.ok_btn, rely = -10)
     def on_ok(self):
         self.parentApp.setNextForm("SHOW_JOBS")
@@ -239,10 +243,11 @@ TO-DO
 
 - Error handling
 -> not selecting a job and pressing Continue makes it crash (fixed)
--> selection index is saved when you cancel the search and search for a new location
+-> selection index is saved when you cancel the search and search for a new location (fixed)
 -> return vs. cancel button, continue/OK button
--> searching for java and then python gives less results than searching for python
+-> searching for java and then python gives less results than searching for python, same with searching for location after python
 -> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why
+-> copying the url makes it crash
 
 - write report
 
