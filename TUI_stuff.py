@@ -127,6 +127,9 @@ class getInputForm(nps.ActionFormMinimal):
         self.form_art = ascii_art("computer_ascii")
         halfx, halfy = half_dim(self, self.form_art)
 
+        self.location_input  = ''
+        self.keywords_inputs = ''
+
         self.add(nps.TitleText, w_id="locationText",    name = "Enter a location:           ", use_two_lines = False, begin_entry_at=30)     # Widget for taking location user input
         self.add(nps.TitleText, w_id="descriptionText", name = "Enter optional keywords:    ", use_two_lines = False, begin_entry_at=30, color = "CAUTION")     # Widget for taking extra keyword user input
         self.add(nps.SimpleGrid, values = self.form_art, columns_width = 100, columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art), relx = halfx)
@@ -138,21 +141,24 @@ class getInputForm(nps.ActionFormMinimal):
         self.job_list_titles = []                                                                         # Creating (and resetting) empty list of titles from the jobs
         self.location_input  = self.get_widget(   "locationText").value                                       # Getting location input from user
         self.keywords_inputs = self.get_widget("descriptionText").value                                    # Getting other keywords input from user
+        #print(self.location_input)
+        #print(self.keywords_inputs)
+
         self.response        = jobSearchAPI(location = self.location_input, search = self.keywords_inputs) # Using the API to look for jobs at the given location and keywords
         for resp in self.response:                                                                         # Adding API response to lists
             self.jobs_list.append(resp)                                                                         # List with dictionaries for all response jobs
             self.job_list_titles.append(resp['title'])                                                          # List with values for the 'title' key for all response jobs
+        
         if len(self.jobs_list) < 1:                                                                        # If no jobs were found
             self.parentApp.switchForm("NO_JOBS")                                                               # Show error popup saying there are no jobs
         else:
             self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             # Setting the values of the job list widget
+            #print(len(self.job_list_titles))
             self.parentApp.getForm('SHOW_JOBS').jobs.value = []
             self.parentApp.getForm('SHOW_JOBS').chosen_job = []
             self.parentApp.switchForm("SHOW_JOBS")
     def on_ok(self):
-        self.parentApp.exit()
-        #self.parentApp.setNextForm(None)
-        #self.parentApp.setNextForm("SHOW_JOBS")                                                            # Go to form that show list of available jobs               
+        self.parentApp.exit()                                                # Go to form that show list of available jobs               
     
 
 # Form that will display the jobs that match search criteria and saves information about a job the user wants to see
@@ -245,8 +251,7 @@ TO-DO
 - Error handling
 -> not selecting a job and pressing Continue makes it crash (fixed)
 -> selection index is saved when you cancel the search and search for a new location (fixed)
--> return vs. cancel button (return goes to previous form, cancel ), continue vs. OK button
--> searching for java and then python gives less results than searching for python, same with searching for location after python
+-> searching for java and then python gives less results than searching for python, same with searching for location after python (fixed)
 -> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why (fixed)
 -> copying the url makes it crash (fixed)
 
