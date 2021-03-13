@@ -117,6 +117,7 @@ class App(nps.NPSAppManaged):
         self.addForm('NO_JOBS',   NoJobsForm,         name = "Error - no jobs")
         self.addForm('SHOW_JOBS', DisplayJobsForm,    name = "Job titles")
         self.addForm('JOB_INFO',  JobInformationForm, name = "info")
+        self.addForm('NO_JOB_SELECTED', NoSelectedJob, name = "Error - no job selected")
     def exit(self):
         self.switchForm(None)
 
@@ -172,7 +173,8 @@ class DisplayJobsForm(nps.ActionForm):
             self.parentApp.getForm('JOB_INFO').job_location.value = self.chosen_job['location']         # Sets location value
             self.parentApp.getForm('JOB_INFO').job_url.value = self.chosen_job['url']                   # Sets github url value
             self.parentApp.switchForm('JOB_INFO')
-        # else what?   
+        else:
+            self.parentApp.switchForm('NO_JOB_SELECTED')
     def on_cancel(self):
         self.parentApp.setNextForm('MAIN')                                                              # Cancelling take user back to search form
     def on_ok(self):
@@ -213,7 +215,15 @@ class JobInformationForm(nps.ActionPopupWide):
     def on_ok(self):
         self.parentApp.exit()
         #self.parentApp.setNextForm(None)                                            # Leave the application
-     
+    
+class NoSelectedJob(nps.ActionPopup):
+    def create(self):
+        self.add(nps.FixedText, name = 'Error', value = "No job selected. \n Please select a job to view more information.", editable = False)
+        #self.add(nps.ButtonPress, name="ok", when_pressed_function = self.ok_btn, rely = -10)
+    def on_ok(self):
+        self.parentApp.setNextForm("SHOW_JOBS")
+    def ok_cancel(self):
+        self.parentApp.setNextForm('SHOW_JOBS')
 
 app = App()
 app.run()
@@ -228,6 +238,11 @@ TO-DO
 
 
 - Error handling
+-> not selecting a job and pressing Continue makes it crash (fixed)
+-> selection index is saved when you cancel the search and search for a new location
+-> return vs. cancel button, continue/OK button
+-> searching for java and then python gives less results than searching for python
+-> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why
 
 - write report
 
