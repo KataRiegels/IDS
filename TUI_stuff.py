@@ -113,7 +113,7 @@ class App(nps.NPSAppManaged):
         nps.setTheme(DefaultTheme)              # Setting cute color theme
 
         # Adding all forms to the app
-        self.addForm('MAIN',      getInputForm,       name = "Enter locations")
+        self.addForm('MAIN',      getInputForm,       name = "Job Search")
         self.addForm('NO_JOBS',   NoJobsForm,         name = "Error - no jobs")
         self.addForm('SHOW_JOBS', DisplayJobsForm,    name = "Job titles")
         self.addForm('JOB_INFO',  JobInformationForm, name = "Job information")
@@ -227,7 +227,7 @@ class NoSelectedJobForm(nps.ActionPopup):
         #self.add(nps.ButtonPress, name="ok", when_pressed_function = self.ok_btn, rely = -10)
     def on_ok(self):
         self.parentApp.setNextForm("SHOW_JOBS")
-    def ok_cancel(self):
+    def on_cancel(self):
         self.parentApp.switchForm('SHOW_JOBS')
 
 app = App()
@@ -247,7 +247,7 @@ TO-DO
 -> selection index is saved when you cancel the search and search for a new location (fixed)
 -> return vs. cancel button, continue vs. OK button
 -> searching for java and then python gives less results than searching for python, same with searching for location after python
--> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why
+-> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why (fixed)
 -> copying the url makes it crash
 
 - write report
