@@ -144,7 +144,6 @@ class App(nps.NPSAppManaged):
 # Form that asks user to give a location and optional search keyword for finding a job
 class getInputForm(ActionForm_edited):
     def create (self):
-
         self.location_input  = ''
         self.keywords_inputs = ''
 
@@ -154,8 +153,7 @@ class getInputForm(ActionForm_edited):
 
         self.form_art = ascii_art("computer_ascii")
         halfx, halfy = self.half_dim(self.form_art)  
-        self.add(nps.SimpleGrid, values = self.form_art,  columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art), relx = halfx)
-        
+        self.add(nps.SimpleGrid, values = self.form_art,  columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art), relx = halfx) 
 
     def contin_btn(self, *args, **kwargs):
         self.jobs_list       = []                                                                         # Creating (and resetting) empty list of jobs
@@ -177,26 +175,19 @@ class getInputForm(ActionForm_edited):
             self.parentApp.getForm('SHOW_JOBS').jobs.value = []
             self.parentApp.getForm('SHOW_JOBS').chosen_job = []
             self.parentApp.switchForm("SHOW_JOBS")
-    """
-    def on_ok(self):
-        self.parentApp.exitApp()                                                # Go to form that show list of available jobs               
-    """
-
+  
 # Form that will display the jobs that match search criteria and saves information about a job the user wants to see
 class DisplayJobsForm(ActionForm_edited):
     def create (self):
         self.jobs       = self.add(nps.TitleSelectOne, scroll_exit=True, max_height=11,  name='Jobs') # Widget that allows user to see and pick available jobs
         self.chosen_job =  []                                                                         # Creating empty chosen job list
         self.parentApp.addButtons(self, "continue", "return", "exit")
-
         self.form_art = ascii_art("computer_ascii")
         halfx, halfy = self.half_dim(self.form_art)  
         self.add(nps.SimpleGrid, values = self.form_art,  columns = 1, color = "CAUTIONHL", 
                  editable = False, rely = -len(self.form_art), relx = halfx)                          # Makes a grid of ascii-art
 
-
     def contin_btn(self):
-    #def afterEditing(self):
         if self.jobs.value:                                                                             # If there were actually any jobs
             self.chosen_job =  self.parentApp.getForm('MAIN').jobs_list[self.jobs.value[0]]             # Saving dictionary for chosen job
             self.parentApp.getForm('JOB_INFO').job_company.value = self.chosen_job['company']           # sets chosen company value
@@ -207,8 +198,6 @@ class DisplayJobsForm(ActionForm_edited):
             self.parentApp.switchForm('JOB_INFO')
         else:
             self.parentApp.switchForm('NO_JOB_SELECTED')
-    
-
         #self.parentApp.setNextForm("JOB_INFO")                                                          # Ok continues to show job info about chosen job
 
 # Popup that shows information about the job the user picked in the DisplayJobsForm
@@ -224,18 +213,16 @@ class JobInformationForm(ActionPopupWide_edited):
         #self.job_title    = self.add(nps.TitleText, name = "Job title: ", editable = False)
         #self.job_location = self.add(nps.TitleText, name = "Location: ",  editable = False)
         #self.job_url      = self.add(nps.TitleFixedText, name = "Job URL: ")
-        self.copy_hint    = self.add(nps.FixedText, value = "Press CTRL+C / CMD+C to copy URL", relx = 30, color = 'CURSOR', editable = False)
-        self.add_handlers({"^C": self.clipboard})
+        self.copy_hint    = self.add(nps.FixedText, value = "Press CTRL+C / CMD+C to copy URL", 
+                                     relx = 30, color = 'CURSOR', editable = False)                 # Hints user on copying URL
+        self.add_handlers({"^C": self.clipboard})                                                   # Makes ctrl+c / cmd+c copy the job's github url
         self.parentApp.addButtons(self, "return", "exit")
     
     def createInfoLine(self, name):
         return self.add(nps.TitleText, name = name, editable = False, relx = 4)
-    def clipboard(self, *args):
+    def clipboard(self, *args):                                         # Copies the url of the job  
         pyperclip.copy(self.job_url.value)      
-        #spam = pyperclip.paste()
-    def on_ok(self):
-        self.parentApp.returnForm()
-        self.parentApp.exitApp()
+
  
 # Popup in case there were no jobs matching the search criteria
 class NoJobsForm(ActionPopup_edited):
@@ -259,9 +246,6 @@ app.run()
 
 
 
-
-
-# Popup in case continue was pressed but no job was selected
 
 """
 
