@@ -111,10 +111,11 @@ class App(nps.NPSAppManaged):
         nps.setTheme(DefaultTheme)              # Setting cute color theme
 
         # Adding all forms to the app
-        self.addForm('MAIN',      getInputForm,       name = "Enter locations")
+        self.addForm('MAIN',      getInputForm,       name = "Job Search")
         self.addForm('NO_JOBS',   NoJobsForm,         name = "Error - no jobs")
         self.addForm('SHOW_JOBS', DisplayJobsForm,    name = "Job titles")
-        self.addForm('JOB_INFO',  JobInformationForm, name = "info")
+        self.addForm('JOB_INFO',  JobInformationForm, name = "Job information")
+        self.addForm('NO_JOB_SELECTED', NoSelectedJobForm, name = "Error - no job selected")
     def exit(self):
         self.switchForm(None)
 
@@ -123,6 +124,9 @@ class getInputForm(nps.ActionFormMinimal):
     def create (self):
         self.form_art = ascii_art("computer_ascii")
         halfx, halfy = half_dim(self, self.form_art)
+
+        self.location_input  = ''
+        self.keywords_inputs = ''
 
         self.add(nps.TitleText, w_id="locationText",    name = "Enter a location:           ", use_two_lines = False, begin_entry_at=30)     # Widget for taking location user input
         self.add(nps.TitleText, w_id="descriptionText", name = "Enter optional keywords:    ", use_two_lines = False, begin_entry_at=30, color = "CAUTION")     # Widget for taking extra keyword user input
@@ -135,21 +139,26 @@ class getInputForm(nps.ActionFormMinimal):
         self.job_list_titles = []                                                                         # Creating (and resetting) empty list of titles from the jobs
         self.location_input  = self.get_widget(   "locationText").value                                       # Getting location input from user
         self.keywords_inputs = self.get_widget("descriptionText").value                                    # Getting other keywords input from user
+        #print(self.location_input)
+        #print(self.keywords_inputs)
+
         self.response        = jobSearchAPI(location = self.location_input, search = self.keywords_inputs) # Using the API to look for jobs at the given location and keywords
         for resp in self.response:                                                                         # Adding API response to lists
             self.jobs_list.append(resp)                                                                         # List with dictionaries for all response jobs
             self.job_list_titles.append(resp['title'])                                                          # List with values for the 'title' key for all response jobs
+        
         if len(self.jobs_list) < 1:                                                                        # If no jobs were found
             self.parentApp.switchForm("NO_JOBS")                                                               # Show error popup saying there are no jobs
         else:
             self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             # Setting the values of the job list widget
+            #print(len(self.job_list_titles))
+            self.parentApp.getForm('SHOW_JOBS').jobs.value = []
+            self.parentApp.getForm('SHOW_JOBS').chosen_job = []
             self.parentApp.switchForm("SHOW_JOBS")
 
     
     def on_ok(self):
-        self.parentApp.exit()
-        #self.parentApp.setNextForm(None)
-        #self.parentApp.setNextForm("SHOW_JOBS")                                                            # Go to form that show list of available jobs               
+        self.parentApp.exit()                                                # Go to form that show list of available jobs               
     
 
 # Form that will display the jobs that match search criteria and saves information about a job the user wants to see
@@ -161,20 +170,23 @@ class DisplayJobsForm(nps.ActionForm):
         self.add(nps.ButtonPress, name="Return",   when_pressed_function = self.return_btn, rely = -5, color = "DANGER")
 
     def return_btn(self):
-        self.parentApp.switchFormPrevious()
+        self.parentApp.switchForm('MAIN')
 
     def contin_btn(self):
     #def afterEditing(self):
         if self.jobs.value:                                                                             # If there were actually any jobs
             self.chosen_job =  self.parentApp.getForm('MAIN').jobs_list[self.jobs.value[0]]             # Saving dictionary for chosen job
             self.parentApp.getForm('JOB_INFO').job_company.value = self.chosen_job['company']           # sets chosen company value
+            #print(self.chosen_job)
             self.parentApp.getForm('JOB_INFO').job_title.value = self.chosen_job['title']               # Sets chosen title value
             self.parentApp.getForm('JOB_INFO').job_location.value = self.chosen_job['location']         # Sets location value
             self.parentApp.getForm('JOB_INFO').job_url.value = self.chosen_job['url']                   # Sets github url value
             self.parentApp.switchForm('JOB_INFO')
-        # else what?   
+        else:
+            self.parentApp.switchForm('NO_JOB_SELECTED')
     def on_cancel(self):
-        self.parentApp.setNextForm('MAIN')                                                              # Cancelling take user back to search form
+        #self.jobs = []
+        self.parentApp.setNextForm('MAIN')                                                              # Cancelling takes user back to search form
     def on_ok(self):
         self.parentApp.exit()
         #self.parentApp.setNextForm("JOB_INFO")                                                          # Ok continues to show job info about chosen job
@@ -182,7 +194,7 @@ class DisplayJobsForm(nps.ActionForm):
 # Popup in case there were no jobs matching the search criteria
 class NoJobsForm(nps.ActionPopup):
     def create(self):
-        self.job_company = self.add(nps.FixedText, name = "Error", value = "No jobs found :-( Try with other search terms", editable = False)
+        self.job_company = self.add(nps.MultiLineEdit, name = "Error", value = "No jobs found :-(\nTry again with other search terms.", editable = False)
     def on_ok(self):
         self.parentApp.setNextForm("MAIN")
     def on_cancel(self):
@@ -200,7 +212,7 @@ class JobInformationForm(nps.ActionPopupWide):
         self.add(nps.ButtonPress, name="Return", when_pressed_function=self.return_btn, rely = 10, color = "DANGER")
 
         self.add_handlers({"^C": self.handler})
-    def handler(self):
+    def handler(self, *args, **keywords):
         pyperclip.copy(self.job_url.value)
         spam = pyperclip.paste()
 
@@ -213,7 +225,16 @@ class JobInformationForm(nps.ActionPopupWide):
     def on_ok(self):
         self.parentApp.exit()
         #self.parentApp.setNextForm(None)                                            # Leave the application
-     
+
+# Popup in case continue was pressed but no job was selected
+class NoSelectedJobForm(nps.ActionPopup):
+    def create(self):
+        self.add(nps.MultiLineEdit, name = 'Error', value = "No job selected.\nPlease select a job for more information.", editable = False)
+        #self.add(nps.ButtonPress, name="ok", when_pressed_function = self.ok_btn, rely = -10)
+    def on_ok(self):
+        self.parentApp.setNextForm("SHOW_JOBS")
+    def on_cancel(self):
+        self.parentApp.switchForm('SHOW_JOBS')
 
 app = App()
 app.run()
@@ -228,6 +249,11 @@ TO-DO
 
 
 - Error handling
+-> not selecting a job and pressing Continue makes it crash (fixed)
+-> selection index is saved when you cancel the search and search for a new location (fixed)
+-> searching for java and then python gives less results than searching for python, same with searching for location after python (fixed)
+-> pressing the cancel button in the NO_SELECTED_JOB popup doesn't have any effects and idk why (fixed)
+-> copying the url makes it crash (fixed)
 
 - write report
 
