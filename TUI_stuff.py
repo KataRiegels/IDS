@@ -91,7 +91,7 @@ class DefaultTheme(nps.ThemeManager):
     'CONTROL'     : 'YELLOW_BLACK',
     'IMPORTANT'   : 'GREEN_BLACK',
     'SAFE'        : 'GREEN_BLACK',
-    'WARNING'     : 'YELLOW_BLACK',
+    'WARNING'     : 'YELLOW_BLACK', 
     'DANGER'      : 'RED_BLACK',
     'CRITICAL'    : 'BLACK_RED',
     'GOOD'        : 'GREEN_BLACK',
@@ -102,13 +102,11 @@ class DefaultTheme(nps.ThemeManager):
     }
 
 
-
-
-
 # -------------- App and Forms for the TUI -----------------------------------------
 
 class App(nps.NPSAppManaged):
     def onStart(self):
+        
         #nps.setTheme(nps.Themes.ColorfulTheme)              # Setting cute color theme
         nps.setTheme(DefaultTheme)              # Setting cute color theme
 
@@ -129,8 +127,8 @@ class getInputForm(nps.ActionFormMinimal):
         self.add(nps.TitleText, w_id="locationText",    name = "Enter a location:           ", use_two_lines = False, begin_entry_at=30)     # Widget for taking location user input
         self.add(nps.TitleText, w_id="descriptionText", name = "Enter optional keywords:    ", use_two_lines = False, begin_entry_at=30, color = "CAUTION")     # Widget for taking extra keyword user input
         self.add(nps.SimpleGrid, values = self.form_art, columns_width = 100, columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art), relx = halfx)
-        self.add(nps.ButtonPress, name="Continue", when_pressed_function=self.contin_btn, rely = -5, relx = -15)
-
+        self.add(nps.ButtonPress, name="Continue",         when_pressed_function=self.contin_btn,     rely = -10)
+        self.add(nps.ButtonPress, name="Exit application", when_pressed_function=self.parentApp.exit, rely = -15)
 
     def contin_btn(self, *args, **kwargs):
         self.jobs_list       = []                                                                         # Creating (and resetting) empty list of jobs
@@ -146,6 +144,8 @@ class getInputForm(nps.ActionFormMinimal):
         else:
             self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             # Setting the values of the job list widget
             self.parentApp.switchForm("SHOW_JOBS")
+
+    
     def on_ok(self):
         self.parentApp.exit()
         #self.parentApp.setNextForm(None)
