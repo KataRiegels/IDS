@@ -1,8 +1,8 @@
 
 
-import json, requests
+import json, requests, pyperclip
 import npyscreen as nps
-import pyperclip
+
 
 
 
@@ -28,9 +28,10 @@ def jobSearchAPI(**kwargs):
     for key, value in kwargs.items():                   # Goes through the keyword arguments
         payload += "{}={}&".format(key,value)           # formats the key for the search and the search choice so the string can be added to the url later
     payload = payload.rstrip(payload[-1])               # Removes the last &
-    url_ = "https://jobs.github.com/positions.json?"    # The "base" part of the API address
-    r = requests.get(url = url_ + payload)              # Gettings the API data
-    response = r.json()                                 # Convers the json file into a disctionary
+    # Gettings and converting the API data
+    url_ = "https://jobs.github.com/positions.json?"    
+    r = requests.get(url = url_ + payload)              
+    response = r.json()                                 
     response = checkMorePages(response, url_, payload)  # Checks if there are more pages (see report for more info)
     return response
 
@@ -39,13 +40,13 @@ def checkMorePages(response, url_, search_choice):
     response_size_limit = 50                                           # First time checking should only happen if it seems we reached max for the first page
     pages = 2                                                          # Starts at page 1, so we check second page
     more_pages = len(response) >= response_size_limit and pages < 10   # Should check more pages if there are 50 responses
-    while (more_pages):                                                # Continuously checks if we need to access more pages
-        url__ = url_  + search_choice + '&page=' + str(pages)          # Contatinating url such that it can check different page numbers 
-        r = requests.get(url = url__)                                  # Getting API data
+    while (more_pages):                                                
+        url__ = url_  + search_choice + '&page=' + str(pages)         
+        r = requests.get(url = url__)                                  
         response = response + r.json()                                 # Appends the previous response with the most recent page. 
         pages += 1
         response_size_limit += 50
-        more_pages = len(response) >= response_size_limit and pages < 10       # Updates loop condition
+        more_pages = len(response) >= response_size_limit and pages < 10       
     return response
 
 
@@ -77,7 +78,7 @@ class ActionForm_edited(nps.ActionFormV2):
         halfx, halfy = self.half_dim(self.form_art)  
         self.add(nps.SimpleGrid, values = self.form_art,  columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art)-2, relx = halfx) 
 
-    # Function that subclasses should overwrite to choose what "continue" should do
+    # Function that subclasses this should overwrite to choose what "continue" should do
     def contin_btn(self):
         pass
 
@@ -185,7 +186,7 @@ class getInputForm(ActionForm_edited):
             # Used for resetting jobs lists things in case the user returned to choose new search terms
             self.parentApp.getForm('SHOW_JOBS').jobs.value = []
             self.parentApp.getForm('SHOW_JOBS').chosen_job = []
-            # Switches to the DisplayJobsForm only if there are any matching jobs
+
             self.parentApp.switchForm("SHOW_JOBS")
   
 # Form that will display the jobs that match search criteria and saves information about a job the user wants to see
