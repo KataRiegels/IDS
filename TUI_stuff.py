@@ -78,24 +78,50 @@ class DefaultTheme(nps.ThemeManager):
 
 
 
-# Subclassing npyscreen's ActionFormV2 in order to remove the "cancel" and "ok" button. 
+# Subclassing npyscreen's ActionFormV2 in order to remove the "cancel" and "ok" button. Additional functionality added
 class ActionForm_edited(nps.ActionFormV2):
     # Function that overrides the creation of cancel and ok button
     def create_control_buttons(self):
         pass
 
-    # Functions that can find the max x and y for a Form
+    # Function that can find and return the max x and y for a Form
     def max_dim(self):
         my, mx = self.curses_pad.getmaxyx()
         return my,mx
 
-    # Function that will return the position a widget should be placed if wanted placed in the middle
+    # Function that will return the position a widget (mainly for ascii art) should be placed if wanted placed in the middle
     def half_dim(self, widget):
-        halfy = self.max_dim()[0]/2
-        halfx = self.max_dim()[1]/2
-        pos_halfy = round(halfy-len(widget)/2)
-        pos_halfx = round(halfx-len(widget[0][0])/2)
+        halfy = self.max_dim()[0]/2                     # y value at middle of screen       
+        halfx = self.max_dim()[1]/2                     # x value at middle of screen
+        pos_halfy = round(halfy-len(widget)/2)          # y value for ascii art if it should be at the middle
+        pos_halfx = round(halfx-len(widget[0][0])/2)    # x value for ascii art if it should be at the middle
         return pos_halfx, pos_halfy
+    
+    # Adds ascii art to the form
+    def addAsciiArt(self, ascii_art_file):
+        self.form_art = ascii_art(ascii_art_file)
+        halfx, halfy = self.half_dim(self.form_art)  
+        self.add(nps.SimpleGrid, values = self.form_art,  columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art)-2, relx = halfx) 
+
+    # Function that subclasses should overwrite to choose what "continue" should do
+    def contin_btn(self):
+        pass
+
+    # Added for function addButtons below, since when_pressed_function's input cannot take the None argument
+    def exitApp(self):
+        self.parentApp.switchForm(None)
+
+   # Adds buttons to a form. Each form can get multiple of the possible buttons: Continue, return and Exit application. 
+    def addButtons(self, *names):
+        for name in names:
+            if name == "continue":   # Behvaior depends on specific form. 
+                self.add(nps.ButtonPress, name="Continue",         when_pressed_function = self.contin_btn, rely = -7, color = "LABEL")
+            elif name == "return":   # Returns to previous form
+                self.add(nps.ButtonPress, name="Return",           when_pressed_function = self.parentApp.switchFormPrevious, rely = -5, color = "WARNING")
+            elif name == "exit":     # "Exit" button will close the application
+                self.add(nps.ButtonPress, name="Exit application", when_pressed_function=  self.exitApp,    rely = -3, color = "DANGER")
+
+
 
 # Subclassing custom ActionFormV2 to make a popup form. Changes size and position of form.
 class ActionPopup_edited(ActionForm_edited):
@@ -126,19 +152,13 @@ class App(nps.NPSAppManaged):
         self.addForm('SHOW_JOBS',       DisplayJobsForm,    name = "Job titles")
         self.addForm('JOB_INFO',        JobInformationForm, name = "Job information")
         self.addForm('NO_JOB_SELECTED', NoSelectedJobForm,  name = "Error - no job selected")
+
     def exitApp(self):
         self.switchForm(None)
     def returnForm(self):
         self.switchFormPrevious()
-    # Adds buttons to a form. Each form can get multiple of the possible buttons: Continue, return and Exit application. 
-    def addButtons(self, form, *names):
-        for name in names:
-            if name == "continue":   # Behvaior depends on specific form. 
-                form.add(nps.ButtonPress, name="Continue",         when_pressed_function = form.contin_btn, rely = -7, color = "LABEL")
-            elif name == "return":   # Returns to previous form
-                form.add(nps.ButtonPress, name="Return",           when_pressed_function = self.returnForm, rely = -5, color = "WARNING")
-            elif name == "exit":     # "Exit" button will close the application
-                form.add(nps.ButtonPress, name="Exit application", when_pressed_function=  self.exitApp,    rely = -3, color = "DANGER")
+
+ 
 
 
 # Form that asks user to give a location and optional search keyword for finding a job
@@ -149,12 +169,15 @@ class getInputForm(ActionForm_edited):
 
         self.add(nps.TitleText, w_id="locationText",    name = "Enter a location:           ", use_two_lines = False, begin_entry_at=30, rely = 5)     # Widget for taking location user input
         self.add(nps.TitleText, w_id="descriptionText", name = "Enter optional keywords:    ", use_two_lines = False, begin_entry_at=30, rely = 7)     # Widget for taking extra keyword user input
-        self.parentApp.addButtons(self, "continue","exit")
+        self.addButtons("continue","exit")
+        self.addAsciiArt("computer2_ascii")
 
-        self.form_art = ascii_art("computer_ascii")
+        """
+        self.form_art = ascii_art("computer2_ascii")
         halfx, halfy = self.half_dim(self.form_art)  
-        self.add(nps.SimpleGrid, values = self.form_art,  columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art), relx = halfx) 
-
+        print(len(self.form_art))
+        self.add(nps.SimpleGrid, values = self.form_art,  columns = 1, color = "CAUTIONHL", editable = False, rely = -len(self.form_art)-2, relx = halfx) 
+        """
     def contin_btn(self, *args, **kwargs):
         self.jobs_list       = []                                                                         # Creating (and resetting) empty list of jobs
         self.job_list_titles = []                                                                         # Creating (and resetting) empty list of titles from the jobs
@@ -181,12 +204,11 @@ class DisplayJobsForm(ActionForm_edited):
     def create (self):
         self.jobs       = self.add(nps.TitleSelectOne, scroll_exit=True, max_height=11,  name='Jobs') # Widget that allows user to see and pick available jobs
         self.chosen_job =  []                                                                         # Creating empty chosen job list
-        self.parentApp.addButtons(self, "continue", "return", "exit")
-        self.form_art = ascii_art("computer_ascii")
-        halfx, halfy = self.half_dim(self.form_art)  
-        self.add(nps.SimpleGrid, values = self.form_art,  columns = 1, color = "CAUTIONHL", 
-                 editable = False, rely = -len(self.form_art), relx = halfx)                          # Makes a grid of ascii-art
+        self.addButtons("continue", "return", "exit")
+        self.addAsciiArt("computer2_ascii")
 
+
+    # Well search for jobs whenever user pressed the "continue" button
     def contin_btn(self):
         if self.jobs.value:                                                                             # If there were actually any jobs
             self.chosen_job =  self.parentApp.getForm('MAIN').jobs_list[self.jobs.value[0]]             # Saving dictionary for chosen job
@@ -216,7 +238,7 @@ class JobInformationForm(ActionPopupWide_edited):
         self.copy_hint    = self.add(nps.FixedText, value = "Press CTRL+C / CMD+C to copy URL", 
                                      relx = 30, color = 'CURSOR', editable = False)                 # Hints user on copying URL
         self.add_handlers({"^C": self.clipboard})                                                   # Makes ctrl+c / cmd+c copy the job's github url
-        self.parentApp.addButtons(self, "return", "exit")
+        self.addButtons("return", "exit")
     
     def createInfoLine(self, name):
         return self.add(nps.TitleText, name = name, editable = False, relx = 4)
@@ -228,13 +250,13 @@ class JobInformationForm(ActionPopupWide_edited):
 class NoJobsForm(ActionPopup_edited):
     def create(self):
         self.job_company = self.add(nps.MultiLineEdit, name = "Error", value = "No jobs found :-(\nTry again with other search terms.", editable = False)
-        self.parentApp.addButtons(self, "return", "exit")
+        self.addButtons("return", "exit")
 
 # Popup in case no jobs are chosen in the DisplayJobsForm
 class NoSelectedJobForm(ActionPopup_edited):
     def create(self):
         self.add(nps.MultiLineEdit, name = 'Error', value = "No job selected.\nPlease select a job for more information.", editable = False)
-        self.parentApp.addButtons(self, "return", "exit")
+        self.addButtons("return", "exit")
         #self.add(nps.ButtonPress, name="ok", when_pressed_function = self.ok_btn, rely = -10)
 
 
