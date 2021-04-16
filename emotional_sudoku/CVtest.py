@@ -22,6 +22,13 @@ while True:
     #break the loop if nothing is being captured
     if not retval:
         break
+    facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+    
+    for (x, y, w, h) in faces:
+        cv2.rectangle(frame, (x, y-50), (x+w, y+h+10), (255, 0, 0), 2)
+
     # Draw a rectangle, in the frame
     frame = cv2.rectangle(frame, (420, 200), (790, 470), (0, 0, 255), 3)
     # Draw another rectangle in which the image to labelled is to be shown.
