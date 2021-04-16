@@ -9,6 +9,17 @@ screen = curses.initscr()
 board_size = 9
 board_startPos = 3,3
 
+def convertToEmoji(number):
+    if number == 1:
+        return ":)"
+    if number == 2:
+        return ":("
+    if number == 3:
+        return ":o"
+    else:
+        return ":*"
+
+
 def InitCurses():
     '''Curses related stuff'''
     global screen
@@ -113,9 +124,10 @@ class Number:
     def printNumber(self):
         '''Print the number'''
         if self.getState() == 1:
-            screen.addstr(" %s " % self.getNumber(), curses.color_pair(4))
+            screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(4))
         elif self.getState() == 0:
-            screen.addstr(" %s " % self.getNumber(), curses.color_pair(1))		
+            screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(1))		
+
 
 
 
@@ -268,7 +280,7 @@ class MoveCursor:
         elif option == 'actual':
             self.MoveActual()
         else:
-            Quit()
+            Quit() 
     
     def get_x(self):
         '''Return X position'''
