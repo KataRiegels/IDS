@@ -54,7 +54,7 @@ cv2.ocl.setUseOpenCL(False)
 
 # dictionary which assigns each label an emotion (alphabetical order)
 emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful",
-                3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
+                3: "Horny", 4: "Neutral", 5: "Sad", 6: "Surprised"}
 
 def get_gpu_temp():
     temp = subprocess.check_output(['vcgencmd measure_temp | egrep -o \'[0-9]*\.[0-9]*\''],
@@ -62,7 +62,7 @@ def get_gpu_temp():
     return str(float(temp))
 
 # start the webcam feed
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 while True:
     # time for fps
     start_time = time.time()
