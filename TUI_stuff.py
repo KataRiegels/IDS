@@ -211,6 +211,11 @@ class DisplayJobsForm(ActionForm_edited):
         else:                                                                                            # In case no job from the list was selected
             self.parentApp.switchForm('NO_JOB_SELECTED')        
 
+"""klsdjflksj
+"""
+
+
+
 # Popup that shows information about the job the user picked in the DisplayJobsForm
 class JobInformationForm(ActionPopupWide_edited):
     def create(self):
