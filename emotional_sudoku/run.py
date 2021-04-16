@@ -3,6 +3,7 @@ import os
 import sys
 import time
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import cv2
 import numpy as np
 from tensorflow.keras.layers import (Conv2D, Dense, Dropout, Flatten,
@@ -11,8 +12,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import MaxPooling2D
-import os
-import sys
+
 import subprocess
 
 if sys.platform == 'linux':
