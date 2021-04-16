@@ -15,7 +15,7 @@ label_dict = {0: "Thumbs up", 1: "Background", 2: "Thumbs Down",
                 3: "Blood"}
 
 #start webcam
-cam = cv2.VideoCapture(1)
+cam = cv2.VideoCapture(0)
 while True:
     font = cv2.FONT_HERSHEY_SIMPLEX
     retval, frame = cam.read()
