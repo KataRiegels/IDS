@@ -36,47 +36,175 @@ def InitCurses():
 
 class Board():
     '''The game board'''
-    def __init__(self,y,x):
-        self.Board = [] # create the Board
-        self.Board_x = x # lines
-        self.Board_y = y # columns
-        for i in range(0,y): # create the Board columns
-            self.Board.append([])
+    def __init__(self,sud_size,init_x, init_y, horjump = 3, verjump = 1):
+        self.Board = [[Number(0)]*sud_size]*sud_size # create the Board
+        self.sudsize = sud_size
+        self.horizontal_jump = horjump   # How much it jumps in x direction
+        self.vertical_jump   = verjump   # How much it jumps in y direction
+
+        #self.Board_x = x # lines
+        #self.Board_y = y # columns
+        #for i in range(0,sud_size): # create the Board columns
+         #   self.Board.append([])
 
 
 
 class GameBoard(Board):
     '''The game board'''
-    def __init__(self,y,x):
-        Board.__init__(self,y,x)
+    def __init__(self, size, init_x, init_y, horjump = 3, verjump = 1):
+        Board.__init__(self, size, init_x, init_y, horjump, verjump)
+        #board = Board(self, size, init_x, init_y, horjump, verjump)
+
+        
+        self.init_x = init_x
+        self.init_y = init_y
+        self.sudoku_size = size
+        self.xjump = horjump
+        self.yjump = verjump
+        self.noof_inner_lines = int(math.sqrt(board_size)) - 1   # The amount of vertical lines inside the sudoku (e.g. 4x4 has 1)
+        self.xdim = (2 + self.noof_inner_lines + self.sud_size) * self.xjump # 2 -> outer vertical lines. 
+        self.ydim = (2 + self.noof_inner_lines + self.sud_size) * self.yjump
+        
+
+
+
+
+        self.board_left = init_x 
+        self.board_right = self.board_left + (size + self.noof_inner_lines) * self.xjump
+        self.upperbound = init_y
+        self.lowerbound = self.upperbound + board_size + self.noof_inner_lines
         self.Number = Number(0)
         self.Fill()
-            
+    
+    
 
-    def Fill(self):
-        '''Fill the board with random numbers so we can create random Sudoku'''
-        for y in range(0,self.Board_y): # first we fill the board with 0's
-            for x in range(0,self.Board_x):
-                self.Board[y].append(Number(0))
+
 
     def Print(self):
         '''Method to print our game board'''
-        screen.addstr("\n\n"); # get a space for the information message 
-        screen.addstr(" -------------------------------\n", curses.color_pair(5)) 
-        for x in range(0,self.Board_x):
-            screen.addstr(" |", curses.color_pair(5))
-            for y in range(0,self.Board_y):
+        ver_square_bars = "-" * self.xdim
+        listofprints = []
+        lineprint = ""
+        screen.addstr(self.init_y, self.init_x, ver_square_bars, curses.color_pair(5)) 
+        for y in range(self.sudoku_size):
+            if ((y+1) % self.sudSqrt() == 1) and (y+1 > self.sudSqrt()):
+                #screen.addstr(self.init_y + y, self.init_x, ver_square_bars)
+                lineprint = ver_square_bars
+                listofprints.append(lineprint)
+            lineprint = self.printfield("|")
+            for x in range(self.sudoku_size):
+                if ((x+1) % self.sudSqrt() == 1) and (x+1 > self.sudSqrt()):
+                    lineprint += self.printfield("|")
+                if self.Board[x][y].getNumber() == 0:
+                    inp = " "
+                else:
+                    inp = self.Board[x][y].getNumber()
+                lineprint += self.printfield(inp)
+            lineprint += self.printfield("|")
+            listofprints.append(lineprint)
+        listofprints.append(ver_square_bars)
+        print(lineprint)
+        count = 0
+        for i in listofprints:
+            screen.addstr(count + self.init_y+1, self.init_x , i)
+            count += 1
+
+
+    def matrixToInner(self, current_x, current_y, jumpx = 3, jumpy = 1):
+        outer_x = current_x + int(current_x/self.sudoku_size)
+        outer_y = current_y + int(current_y/self.sudoku_size)
+        inner_x = jumpx * outer_x + self.init_x + (jumpx + math.ceil(jumpx/2)) #length + length / 2
+        inner_y = jumpy * outer_y + self.init_y + (jumpy + math.ceil(jumpy/2))
+        return [inner_x, inner_y]
+
+
+
+    def moveCursor(self):
+        '''Method where we read the keyboard keys and think in the game :P'''
+        list = [ ] # create a list with numbers from 9 to 1. We will get the index from the event. example: 57-49=8, but the 8 number is the number 1 so we reverse the list so the index is correct :)
+        for i in range (1,10):
+            list.append(i)
+        list.reverse()
+        while True:
+            screen.clear()
+            self.Board.Print()
+            #if self.Board.SomebodyWonPopcorn(): # checks if he won :P
+             #   ScreenInfo("YOU WIIIIIIIIN!!! :)",2)
+              #  screen.getch()
+               # break
+            self.Cursor.Move('actual')
+            event = screen.getch()
+            if event == ord("q"): 
+                Quit()
+            elif event == (curses.KEY_LEFT or "w"):
+                self.Cursor.Move('left')
+                self.matrixToInner(self.curser.x, self.curser.y)
+                #self.ChosenRowColumn(self.ChosenRow,self.ChosenColumn-1)
+                #self.ForceBorderJump('left')
+            elif event == curses.KEY_RIGHT:
+                self.Cursor.Move('right')
+                self.ChosenRowColumn(self.ChosenRow,self.ChosenColumn+1)
+                self.ForceBorderJump('right')
+            elif event == curses.KEY_UP:
+                self.Cursor.Move('up')
+                self.ChosenRowColumn(self.ChosenRow-1,self.ChosenColumn)
+                self.ForceBorderJump('up')
+            elif event == curses.KEY_DOWN:
+                self.Cursor.Move('down')
+                self.ChosenRowColumn(self.ChosenRow+1,self.ChosenColumn)
+                self.ForceBorderJump('down')
+            elif event >= 49 and event <= 57: # from 1 to 9
+                self.Board.Play(self.ChosenRow,self.ChosenColumn,list[57-event]) # list[57-event] is the right number from the keyboard
+            elif event == ord("s"): # S key
+                self.Board.Solve(0,0,False)
+
+
+
+
+    def sudSqrt(self):
+        return int(math.sqrt(self.sud_size))
+                
+    def shouldSkipColumn(self, current_col):
+        pass
+
+    def boardToActual(self, x, y):
+        #x_noof_jumps = 
+        pass
+
+
+    def printfield(self, inp):
+        inp = str(inp)
+        left  = " " * ( + int((self.xjump- len(str(inp)))/2))
+        right = " " * (self.xjump - len(left) - len(str(inp)))
+        print("*" + left + inp + right + "*")
+        return left + inp + right
+
+    def Fill(self):
+        '''Fill the board with random numbers so we can create random Sudoku'''
+        for x in range(0,self.sud_size): # first we fill the board with 0's
+            for y in range(0,self.sud_size):
+                self.Board[x].append(Number(0))
+
+
+
+
+        """
+        for y in range(self.Board_y):
+            y_coord = y + self.init_y
+            screen.addstr(y_coord, self.init_x, "|", curses.color_pair(5))
+            for x in range(0,self.Board_x):
                 if self.Board[x][y].getNumber() != 0:
                     self.Board[x][y].printNumber()
                 else:
                     screen.addstr("   ")
-                if y == 2 or y == 5:
+                #if x == self.leftbound or x == int(math.sqrt(x)) + self.leftbound:
+                if x == int(math.sqrt(x)) + self.leftbound or x == self.rightbound:
                     screen.addstr("|", curses.color_pair(5))
-            screen.addstr("|\n", curses.color_pair(5) )
-            if x == 2 or x == 5:
-                screen.addstr(" -------------------------------\n", curses.color_pair(5) | curses.A_BOLD) 
-        screen.addstr(" -------------------------------\n", curses.color_pair(5) | curses.A_BOLD) 
-
+            #screen.addstr("|", curses.color_pair(5) )
+            if y == int(math.sqrt(x)) + self.init_x:
+                screen.addstr(y, self.init_x, "-------------------------------", curses.color_pair(5) | curses.A_BOLD) 
+        screen.addstr("-------------------------------", curses.color_pair(5) | curses.A_BOLD) 
+        """
     def setNumber(self, x, y, number, state):
         '''Set the desired number and lock it if True'''
         self.Board[x][y] = Number(number)
@@ -134,9 +262,9 @@ class Number:
 class Table:
     '''Table where we play. The board is in the table and the players are sitting right next to it :)'''	
     def __init__(self):
-        self.Board = GameBoard(9,9)
+        self.Board = GameBoard(4, 2, 2)
         #self.Cursor = MoveCursor(3,3,3,3,1,1,3,13,3,29) # give the rules to MoveCursor Object
-        self.Cursor = MoveCursor(3,3) # give the rules to MoveCursor Object
+        self.Cursor = MoveCursor(2,2) # give the rules to MoveCursor Object
         
         self.ChosenColumn = 0 # my dchosen column
         self.ChosenRow = 0 # my chosen row
@@ -158,6 +286,8 @@ class Table:
             
     def ForceBorderJump(self, keypress):
         '''Force the jump in the border when moving the cursor'''
+        pass
+        """
         if keypress == 'right':
             if self.Cursor.get_x() == 12 or self.Cursor.get_x() == 22:
                 self.Cursor.x = self.Cursor.get_x()+1
@@ -170,6 +300,18 @@ class Table:
         elif keypress == 'down':
             if self.Cursor.get_y() == 6 or self.Cursor.get_y() == 10:
                 self.Cursor.y = self.Cursor.get_y()+1
+        """
+
+
+    
+    def matrixToInner(self, soduko_size, current_x, current_y, init_x, init_y, jumpx = 3, jumpy = 1):
+        outer_x = current_x + int(current_x/soduko_size)
+        outer_y = current_y + int(current_y/soduko_size)
+        inner_x = jumpx * outer_x + init_x + (jumpx + math.ceil(jumpx/2)) #length + length / 2
+        inner_y = jumpy * outer_y + init_y + (jumpy + math.ceil(jumpy/2))
+        return [inner_x, inner_y]
+
+
 
     def Think(self):
         '''Method where we read the keyboard keys and think in the game :P'''
@@ -187,8 +329,8 @@ class Table:
             self.Cursor.Move('actual')
             event = screen.getch()
             if event == ord("q"): 
-                break
-            elif event == curses.KEY_LEFT:
+                Quit()
+            elif event == (curses.KEY_LEFT or "w"):
                 self.Cursor.Move('left')
                 self.ChosenRowColumn(self.ChosenRow,self.ChosenColumn-1)
                 self.ForceBorderJump('left')
@@ -210,24 +352,49 @@ class Table:
                 self.Board.Solve(0,0,False)
 
 
+def cellToOuter(soduko_size, number):
+    cell = number + int(number/soduko_size)
+
+
+
+def matrixToInner(soduko_size, current_x, current_y, init_x, init_y, jumpx = 3, jumpy = 1):
+    outer_x = current_x + int(current_x/soduko_size)
+    outer_y = current_y + int(current_y/soduko_size)
+    inner_x = jumpx * outer_x + init_x + (jumpx + math.ceil(jumpx/2)) #length + length / 2
+    inner_y = jumpy * outer_y + init_y + (jumpy + math.ceil(jumpy/2))
+    return [inner_x, inner_y]
+
+
+
+def matrixToOuter(number):
+    pass
+
+
+
+    
+
+
+
 
 class MoveCursor:
     '''
     An object to move the cursor with rules 
     Usage: MoveCursor(initial x position, initial y position, move left jump size, move right jump size, go up jump size, go down jump size, up limit size, down limit size, left limit size, right limit size) 
     '''
-    board_size = 9
-    jumplen_hor = 3
+    board_size = 24
+    
+    jumplen_hor = 1
     jumplen_ver = 1
 
 
-    def __init__(self, init_x, init_y):
+
+    def __init__(self, init_x, init_y, lines_to_skip = None, lines_to_skip_input = None):
         self.x = init_x
         self.y = init_y
         self.leftbound = init_x
-        self.rightbound = init_x + (self.jumplen_hor * board_size) -1
+        self.rightbound = init_x + (self.jumplen_hor * self.board_size) -1
         self.upperbound = init_y
-        self.lowerbound = init_y + (self.jumplen_ver * board_size) -1
+        self.lowerbound = init_y + (self.jumplen_ver * self.board_size) +  int(math.sqrt(board_size)) -2
 
 
 
@@ -258,9 +425,13 @@ class MoveCursor:
 
     def MoveUp(self):
         self.y = self.y-self.jumplen_ver
+        if self.y < self.upperbound:
+            self.y = self.lowerbound
 
     def MoveDown(self):
         self.y = self.y+self.jumplen_ver
+        if self.y > self.lowerbound:
+            self.y = self.upperbound
 
 
     def MoveActual(self):
