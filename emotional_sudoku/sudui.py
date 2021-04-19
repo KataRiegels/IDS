@@ -82,6 +82,9 @@ class GameBoard(Board):
         self.board_right = self.board_left + (size + self.noof_inner_lines) * self.xjump
         self.upperbound = init_y
         self.lowerbound = self.upperbound + board_size + self.noof_inner_lines
+
+        self.printcolor = curses.color_pair(2)
+
         #self.Number = Number(0)
         #self.Fill()
     
@@ -94,6 +97,7 @@ class GameBoard(Board):
         ver_square_bars = "-" * self.xdim
         listofprints = []
         lineprint = ""
+        pos = None
         screen.addstr(self.init_y, self.init_x, ver_square_bars, curses.color_pair(5)) 
         screen.addstr(15,50, f'number at {0}: {self.Board[0][0].getNumber()}')
         screen.addstr(16,50, f'number at {1}: {self.Board[1][0].getNumber()}')
@@ -110,11 +114,16 @@ class GameBoard(Board):
                 if ((x+1) % self.sudSqrt() == 1) and (x+1 > self.sudSqrt()):
                     lineprint += self.printfield("|")
                 if self.Board[x][y].getNumber() != 0:
-                    screen.addstr(10+x,50, f'number at {x}: {self.Board[x][y].getNumber()}')
-                    inp = self.Board[x][y].getNumber()
+                    inp = self.printfield(self.Board[x][y].getNumber())
                 else:
                     inp = " "
-                    
+                """
+                if self.Board[x][y].getNumber() != 0:
+                    #inp = self.Board[x][y].getNumber()
+                    coord = self.matrixToInner(x,y)
+                    pos = []
+                    pos.append(coord)
+                """
                     
                 lineprint += self.printfield(inp)
             lineprint += self.printfield("|")
@@ -123,8 +132,15 @@ class GameBoard(Board):
         count = 0
         for q in listofprints:
             screen.addstr(count + self.init_y+1, self.init_x , q)
-            count += 1
+            count += 1  
            # screen.addstr(count + self.init_y+1, self.init_x , "kælkælkæk")
+        #if pos:
+         #   for i in pos: 
+          #      screen.addstr(i[0], i[1], self.printfield(self.Board[x][y].getNumber()), self.printcolor)
+
+
+
+
 
 
     def matrixToInner(self, current_x, current_y, jumpx = 3, jumpy = 1):
@@ -150,7 +166,8 @@ class GameBoard(Board):
     def moveCursor(self):
         pos = self.matrixToInner(self.current_column, self.current_row)
         self.cursor.x, self.cursor.y = pos[0],pos[1]
-
+        self.cursor.Move('actual')
+        
 
     def update(self):
         '''Method where we read the keyboard keys and think in the game :P'''
@@ -164,6 +181,7 @@ class GameBoard(Board):
             #screen.clear()
             self.Print()
             self.cursor.Move('actual')
+            self.printcolor = curses.color_pair(2)
             event = screen.getch()
             if event == ord("q"): 
                 Quit()
@@ -178,13 +196,23 @@ class GameBoard(Board):
             #elif event >= 
             elif event >= 48 and event <= 57: # from 1 to 9
                 number = event-48
-                while True:
+                self.Print()
+                notEnter = True
+                while notEnter:
+                    self.Board[self.current_column][self.current_row] = N(number)
+                    #self.cursor.Move('actual')
+                    
+                    self.Print()
+                    self.moveCursor()
                     multiplier = 10
                     key = screen.getch()
-                    number += (key-48)*multiplier
-                    multiplier *= 10
+                    if key == 10:
+                        self.printcolor = curses.color_pair(0)
+                        notEnter = False
                     
-                
+                    elif key >= 48 and key <= 57:
+                        number = (number)*multiplier + key-48
+                        multiplier *= 10
                 self.Board[self.current_column][self.current_row] = N(number)
 
             self.moveCursor()
