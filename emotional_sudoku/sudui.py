@@ -99,10 +99,6 @@ class GameBoard(Board):
         lineprint = ""
         pos = None
         screen.addstr(self.init_y, self.init_x, ver_square_bars, curses.color_pair(5)) 
-        screen.addstr(15,50, f'number at {0}: {self.Board[0][0].getNumber()}')
-        screen.addstr(16,50, f'number at {1}: {self.Board[1][0].getNumber()}')
-        screen.addstr(17,50, f'number at {2}: {self.Board[2][0].getNumber()}')
-        screen.addstr(18,50, f'number at {3}: {self.Board[3][0].getNumber()}')
 
         for y in range(self.sudoku_size): 
             if ((y+1) % self.sudSqrt() == 1) and (y+1 > self.sudSqrt()):
@@ -389,7 +385,7 @@ class Menu:
         #if self.Cursor.get_x() == 2:
         #gogo = Table()
         
-        board = GameBoard(9, 2, 2)
+        board = GameBoard(4, 2, 2)
         board.update()
 
         if self.Cursor.get_x() == 5:
