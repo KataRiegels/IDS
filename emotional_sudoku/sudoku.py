@@ -1,6 +1,8 @@
 '''
-1. fill one box randomly
-2. fill diagonal randomly
+1. Create a sudoku:
+    1.1. fill one box randomly
+    1.2. fill diagonal randomly
+2. Only add distinct sudokus to a list
 '''
 
 import random as rand
@@ -51,20 +53,7 @@ def displaySudoku(grid):
     for col in grid:
         print(col)
 
-def hasDuplicateSudoku(gridList, grid):
-    counter = 0
-    for i in range(len(gridList)):
-        counter = 0
-        for j in range(len(grid)):
-            if grid[j] == gridList[i][j]:
-                counter += 1
-    if counter >= len(grid):
-        return True
-    else: 
-        return False
-
-#print(hasDuplicateSudoku([[0,0],[1,1]],[0,1]))
-
+# method for creating n different sudokus
 def createSudokus(numberOfSudokus):
     n = numberOfSudokus
     sudokus = []    # list of grids
@@ -77,23 +66,30 @@ def createSudokus(numberOfSudokus):
         # check if grid is in grids
         #sudokus.append(grid)
         
-        if not hasDuplicateSudoku(sudokus,grid):
+        if not contains(sudokus,grid):
             sudokus.append(grid)
-            print("Sudoku No.",len(sudokus))
-            displaySudoku(grid)         # prints the sudoku grid
-        #else:
-            #print("dup")
-        
-    return sudokus
-        
-'''
-def removeDuplicateSudokus(sList):
-    for i in sList:
-        for j in sList:
-'''   
+            #print("Sudoku No.",len(sudokus))
+            #displaySudoku(grid)         # prints the sudoku grid
+    return sudokus 
 
+# method for checking if two lists have the same entries
+def sameList(list1, list2):
+    counter = 0
+    for i in range(len(list1)):
+        if list1[i] == list2[i]:
+            counter += 1
+    if counter >= len(list1):
+        return True
+    else:
+        return False
 
-sudokus = createSudokus(10)
+# method for checking if a list of lists already contains a specific list
+def contains(sudokuList, grid):
+    for s in sudokuList:
+        if sameList(s,grid):
+            return True
+    return False
 
+# create all 288 possible sudokus, stored in a list
+sudokus = createSudokus(2000)
 print(len(sudokus))
-# save sudokus as a list of grids
