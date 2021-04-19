@@ -1,7 +1,6 @@
 '''
 1. fill one box randomly
 2. fill diagonal randomly
-3. fill rest according to sudoku rules
 '''
 
 import random as rand
@@ -54,7 +53,7 @@ def displaySudoku():
 
 
 grid = [[] for i in range(4)]   # creates empty grid
-fillBox()               # fills top right box randomly
+fillBox()               # fills top left box randomly
 fillDiagonal()          # fills the diagonal randomly
 fillRest()              # fills rest with zeros
 displaySudoku()         # prints the sudoku grid
