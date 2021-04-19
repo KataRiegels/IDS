@@ -37,10 +37,13 @@ def InitCurses():
 class Board():
     '''The game board'''
     def __init__(self,sudoku_size,init_x, init_y, horjump = 3, verjump = 1):
-        self.Board = [[Number(0)]*sudoku_size]*sudoku_size # create the Board
+        lists = [N(0)]*sudoku_size
+        print(lists)
+        #Number(0),Number(0),Number(0),Number(0),Number(0),Number(0),Number(0),Number(0),Number(0)
+        self.Board = [[N(0)]*sudoku_size for i in range(sudoku_size)]
+        #self.Board = [[Number(0)]*sudoku_size]*sudoku_size # create the Board
         self.sudsize = sudoku_size
         self.horizontal_jump = horjump   # How much it jumps in x direction
-        self.vertical_jump   = verjump   # How much it jumps in y direction
 
         #self.Board_x = x # lines
         #self.Board_y = y # columns
@@ -54,8 +57,10 @@ class GameBoard(Board):
     def __init__(self, size, init_x, init_y, horjump = 3, verjump = 1):
         Board.__init__(self, size, init_x, init_y, horjump, verjump)
         #board = Board(self, size, init_x, init_y, horjump, verjump)
-        self.cursor = MoveCursor(init_x,init_y)
-        
+        self.current_row = 0
+        self.current_column = 0
+        #self.init_cursor_x, self.init_cursor_y = init_x + horjump, init_y + verjump
+
         self.init_x = init_x
         self.init_y = init_y
         self.sudoku_size = size
@@ -69,13 +74,16 @@ class GameBoard(Board):
 
         self.current_row = 0
         self.current_column = 0
-
+        self.cursor = MoveCursor(init_x, init_y)
+        init_cursor = self.matrixToInner(0,0)
+        self.cursor.x, self.cursor.y = init_cursor[0], init_cursor[1]
+        self.cursor.Move('actual')
         self.board_left = init_x 
         self.board_right = self.board_left + (size + self.noof_inner_lines) * self.xjump
         self.upperbound = init_y
         self.lowerbound = self.upperbound + board_size + self.noof_inner_lines
-        self.Number = Number(0)
-        self.Fill()
+        #self.Number = Number(0)
+        #self.Fill()
     
     
 
@@ -87,6 +95,11 @@ class GameBoard(Board):
         listofprints = []
         lineprint = ""
         screen.addstr(self.init_y, self.init_x, ver_square_bars, curses.color_pair(5)) 
+        screen.addstr(15,50, f'number at {0}: {self.Board[0][0].getNumber()}')
+        screen.addstr(16,50, f'number at {1}: {self.Board[1][0].getNumber()}')
+        screen.addstr(17,50, f'number at {2}: {self.Board[2][0].getNumber()}')
+        screen.addstr(18,50, f'number at {3}: {self.Board[3][0].getNumber()}')
+
         for y in range(self.sudoku_size): 
             if ((y+1) % self.sudSqrt() == 1) and (y+1 > self.sudSqrt()):
                 #screen.addstr(self.init_y + y, self.init_x, ver_square_bars)
@@ -97,7 +110,7 @@ class GameBoard(Board):
                 if ((x+1) % self.sudSqrt() == 1) and (x+1 > self.sudSqrt()):
                     lineprint += self.printfield("|")
                 if self.Board[x][y].getNumber() != 0:
-                    screen.addstr(20+x,50, f'x,y {x},{y}')
+                    screen.addstr(10+x,50, f'number at {x}: {self.Board[x][y].getNumber()}')
                     inp = self.Board[x][y].getNumber()
                 else:
                     inp = " "
@@ -134,74 +147,55 @@ class GameBoard(Board):
         inner_y = jumpy * outer_y + self.init_y + (jumpy) # + math.ceil(jumpy/2))
         return [inner_x, inner_y]
 
-
-
     def moveCursor(self):
+        pos = self.matrixToInner(self.current_column, self.current_row)
+        self.cursor.x, self.cursor.y = pos[0],pos[1]
+
+
+    def update(self):
         '''Method where we read the keyboard keys and think in the game :P'''
         list = [ ] # create a list with numbers from 9 to 1. We will get the index from the event. example: 57-49=8, but the 8 number is the number 1 so we reverse the list so the index is correct :)
         for i in range (1,10):
             list.append(i)
         list.reverse()
-        
+        starty = 50
+        startx = 20
         while True:
             #screen.clear()
             self.Print()
-            #if self.Board.SomebodyWonPopcorn(): # checks if he won :P
-             #   ScreenInfo("YOU WIIIIIIIIN!!! :)",2)
-              #  screen.getch()
-               # break
             self.cursor.Move('actual')
             event = screen.getch()
             if event == ord("q"): 
                 Quit()
             elif event == (curses.KEY_LEFT or "w"):
-                #self.cursor.Move('left')
                 self.current_column -= 1
-                pos = self.matrixToInner(self.current_column, self.current_row)
-                self.cursor.x, self.cursor.y = pos[0],pos[1]
-                #self.ChosenRowColumn(self.ChosenRow,self.ChosenColumn-1)
-                #self.ForceBorderJump('left')
             elif event == curses.KEY_RIGHT:
-                #self.cursor.Move('right')
                 self.current_column += 1
-                pos = self.matrixToInner(self.current_column, self.current_row)
-                self.cursor.x, self.cursor.y = pos[0],pos[1]
-                #self.ChosenRowColumn(self.ChosenRow,self.ChosenColumn+1)
-                #self.ForceBorderJump('right')
             elif event == curses.KEY_UP:
-                #self.cursor.Move('up')
                 self.current_row -= 1
-                pos = self.matrixToInner(self.current_column, self.current_row)
-                self.cursor.x, self.cursor.y = pos[0],pos[1]
-                #self.ChosenRowColumn(self.ChosenRow-1,self.ChosenColumn)
-                #self.ForceBorderJump('up')
             elif event == curses.KEY_DOWN:
-                #self.cursor.Move('down')
                 self.current_row += 1
-                pos = self.matrixToInner(self.current_column, self.current_row)
-                self.cursor.x, self.cursor.y = pos[0],pos[1]
-                #self.ChosenRowColumn(self.ChosenRow+1,self.ChosenColumn)
-                #self.ForceBorderJump('down')
-            elif event >= 49 and event <= 57: # from 1 to 9
-                self.Play(self.current_column, self.current_row,list[57-event]) # list[57-event] is the right number from the keyboard
+            #elif event >= 
+            elif event >= 48 and event <= 57: # from 1 to 9
+                number = event-48
+                while True:
+                    multiplier = 10
+                    key = screen.getch()
+                    number += (key-48)*multiplier
+                    multiplier *= 10
+                    
                 
-                #self.Play(self.ChosenRow,self.ChosenColumn,list[57-event]) # list[57-event] is the right number from the keyboard
-            elif event == ord("s"): # S key
-                self.Board.Solve(0,0,False)
+                self.Board[self.current_column][self.current_row] = N(number)
+
+            self.moveCursor()
             
 
 
-
+    def asciiToInt(self, ascii_):
+        return ascii_-48
 
     def sudSqrt(self):
         return int(math.sqrt(self.sudoku_size))
-                
-    def shouldSkipColumn(self, current_col):
-        pass
-
-    def boardToActual(self, x, y):
-        #x_noof_jumps = 
-        pass
 
 
     def printfield(self, inp):
@@ -215,52 +209,24 @@ class GameBoard(Board):
         '''Fill the board with random numbers so we can create random Sudoku'''
         for x in range(0,self.sudoku_size): # first we fill the board with 0's
             for y in range(0,self.sudoku_size):
-                self.Board[x].append(Number(0))
+                self.Board[x].append(N(0))
 
-
-
-
-        """
-        for y in range(self.Board_y):
-            y_coord = y + self.init_y
-            screen.addstr(y_coord, self.init_x, "|", curses.color_pair(5))
-            for x in range(0,self.Board_x):
-                if self.Board[x][y].getNumber() != 0:
-                    self.Board[x][y].printNumber()
-                else:
-                    screen.addstr("   ")
-                #if x == self.leftbound or x == int(math.sqrt(x)) + self.leftbound:
-                if x == int(math.sqrt(x)) + self.leftbound or x == self.rightbound:
-                    screen.addstr("|", curses.color_pair(5))
-            #screen.addstr("|", curses.color_pair(5) )
-            if y == int(math.sqrt(x)) + self.init_x:
-                screen.addstr(y, self.init_x, "-------------------------------", curses.color_pair(5) | curses.A_BOLD) 
-        screen.addstr("-------------------------------", curses.color_pair(5) | curses.A_BOLD) 
-        """
     def setNumber(self, x, y, number, state):
         '''Set the desired number and lock it if True'''
-        self.Board[x][y] = Number(number)
-        if state:
-            self.Board[x][y].setLock()
+        self.Board[x][y] = N(number)
+        #if state:
+         #   self.Board[x][y].setLock()
 
     def Play(self,x,y, number):
         '''The play method :)'''
-        if self.Board[x][y].getNumber() == 0:
-            #if self.CheckNumber(x,y,number) == True:
-            self.setNumber(x,y,number,False)
-        """
-            else:
-                ScreenInfo("Bad number :)",2)
-                screen.getch()				
-        else:
-            ScreenInfo("Can't play here!",2)
-            screen.getch()
-        """
+        #if self.Board[x][y].getNumber() == 0:
+        self.setNumber(x,y,number,False)
+  
 
 
 
 
-class Number:
+class N:
     '''Object number'''		
     def __init__(self, suit):
         self.suit = suit
@@ -287,6 +253,159 @@ class Number:
             screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(4))
         elif self.getState() == 0:
             screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(1))		
+
+
+
+class MoveCursor:
+    '''
+    An object to move the cursor with rules 
+    Usage: MoveCursor(initial x position, initial y position, move left jump size, move right jump size, go up jump size, go down jump size, up limit size, down limit size, left limit size, right limit size) 
+    '''
+    board_size = 24
+    
+    jumplen_hor = 1
+    jumplen_ver = 1
+
+
+
+    def __init__(self, init_x, init_y, lines_to_skip = None, lines_to_skip_input = None):
+        self.x = init_x
+        self.y = init_y
+        self.leftbound = init_x
+        self.rightbound = init_x + (self.jumplen_hor * self.board_size) -1
+        self.upperbound = init_y
+        self.lowerbound = init_y + (self.jumplen_ver * self.board_size) +  int(math.sqrt(board_size)) -2
+
+
+
+    """
+    def __init__(self,initial_x,initial_y,left,right,up,down,x_up_max,x_down_max,y_left_max,y_right_max):
+        self.x           = initial_x
+        self.y           = initial_y
+        self.initial_x   = initial_x
+        self.initial_y   = initial_x
+        self.move_left   = left
+        self.move_right  = right
+        self.move_up     = up
+        self.move_down   = down
+        self.x_up_max    = x_up_max
+        self.y_left_max  = y_left_max
+        self.x_down_max  = x_down_max
+        self.y_right_max = y_right_max
+    """
+    def MoveLeft(self):
+        self.x = self.x - self.jumplen_hor
+        if self.x < self.leftbound:
+            self.x = self.rightbound
+
+    def MoveRight(self):
+        self.x = self.x+self.jumplen_hor
+        if self.x > self.rightbound:
+            self.x = self.leftbound
+
+    def MoveUp(self):
+        self.y = self.y-self.jumplen_ver
+        if self.y < self.upperbound:
+            self.y = self.lowerbound
+
+    def MoveDown(self):
+        self.y = self.y+self.jumplen_ver
+        if self.y > self.lowerbound:
+            self.y = self.upperbound
+
+
+    def MoveActual(self):
+        screen.move(self.y,self.x)
+        
+    def Move(self,option):
+        if option == 'left':
+            self.MoveLeft()
+        elif option == 'right':
+            self.MoveRight()
+        elif option == 'up':
+            self.MoveUp()
+        elif option == 'down':
+            self.MoveDown()
+        elif option == 'initial':
+            self.MoveInitial()
+        elif option == 'actual':
+            self.MoveActual()
+        else:
+            Quit() 
+    
+    def get_x(self):
+        '''Return X position'''
+        return self.x
+        
+    def get_y(self):
+        '''Return Y position'''
+        return self.y
+
+
+
+def Quit():
+    '''Quiiiiiiiit!!!'''
+    curses.endwin()
+    quit()
+
+class Menu:
+    ''''Where everything begins, the Menu (main too)'''	
+    def __init__(self):
+        #self.Cursor = MoveCursor(2,0,0,0,1,1,2,5,0,0) # give the rules to MoveCursor Object
+        self.Cursor = MoveCursor(2,0) # give the rules to MoveCursor Object
+        
+        self.main()
+
+    def henshin_a_gogo_baby(self):
+        '''A name inspired in Viewtiful Joe game, lol. It checks the cursor position and HENSHIN A GOGO BABY'''
+        #if self.Cursor.get_x() == 2:
+        #gogo = Table()
+        
+        board = GameBoard(9, 2, 2)
+        board.update()
+
+        if self.Cursor.get_x() == 5:
+            Quit()
+    
+    def main(self):
+        '''The main :|'''
+        while True:
+            
+            screen.clear()
+            self.henshin_a_gogo_baby()
+            event = screen.getch()
+            #self.henshin_a_gogo_baby()
+            if event == ord("q"): 
+                Quit()
+            """
+            screen.addstr(" Sudoku \n\n", curses.color_pair(3))
+            screen.addstr("  Play\n")
+            screen.addstr("  Help\n")
+            screen.addstr("  About\n")
+            screen.addstr("  Quit\n")
+            
+            
+            self.Cursor.Move('actual')
+            event = screen.getch()
+            #self.henshin_a_gogo_baby()
+            if event == ord("q"): 
+                Quit()
+            elif event == curses.KEY_UP:
+                self.Cursor.Move('up')
+            elif event == curses.KEY_DOWN:
+                self.Cursor.Move('down')
+            elif event == 10:
+                self.henshin_a_gogo_baby()
+            """
+
+if __name__ == '__main__': 
+
+    InitCurses()
+    run_for_your_life = Menu() # The menu
+    curses.napms(3000)
+    curses.endwin()
+
+
 
 
 
@@ -406,151 +525,3 @@ def matrixToOuter(number):
     
 
 
-
-
-class MoveCursor:
-    '''
-    An object to move the cursor with rules 
-    Usage: MoveCursor(initial x position, initial y position, move left jump size, move right jump size, go up jump size, go down jump size, up limit size, down limit size, left limit size, right limit size) 
-    '''
-    board_size = 24
-    
-    jumplen_hor = 1
-    jumplen_ver = 1
-
-
-
-    def __init__(self, init_x, init_y, lines_to_skip = None, lines_to_skip_input = None):
-        self.x = init_x
-        self.y = init_y
-        self.leftbound = init_x
-        self.rightbound = init_x + (self.jumplen_hor * self.board_size) -1
-        self.upperbound = init_y
-        self.lowerbound = init_y + (self.jumplen_ver * self.board_size) +  int(math.sqrt(board_size)) -2
-
-
-
-    """
-    def __init__(self,initial_x,initial_y,left,right,up,down,x_up_max,x_down_max,y_left_max,y_right_max):
-        self.x           = initial_x
-        self.y           = initial_y
-        self.initial_x   = initial_x
-        self.initial_y   = initial_x
-        self.move_left   = left
-        self.move_right  = right
-        self.move_up     = up
-        self.move_down   = down
-        self.x_up_max    = x_up_max
-        self.y_left_max  = y_left_max
-        self.x_down_max  = x_down_max
-        self.y_right_max = y_right_max
-    """
-    def MoveLeft(self):
-        self.x = self.x - self.jumplen_hor
-        if self.x < self.leftbound:
-            self.x = self.rightbound
-
-    def MoveRight(self):
-        self.x = self.x+self.jumplen_hor
-        if self.x > self.rightbound:
-            self.x = self.leftbound
-
-    def MoveUp(self):
-        self.y = self.y-self.jumplen_ver
-        if self.y < self.upperbound:
-            self.y = self.lowerbound
-
-    def MoveDown(self):
-        self.y = self.y+self.jumplen_ver
-        if self.y > self.lowerbound:
-            self.y = self.upperbound
-
-
-    def MoveActual(self):
-        screen.move(self.y,self.x)
-        
-    def Move(self,option):
-        if option == 'left':
-            self.MoveLeft()
-        elif option == 'right':
-            self.MoveRight()
-        elif option == 'up':
-            self.MoveUp()
-        elif option == 'down':
-            self.MoveDown()
-        elif option == 'initial':
-            self.MoveInitial()
-        elif option == 'actual':
-            self.MoveActual()
-        else:
-            Quit() 
-    
-    def get_x(self):
-        '''Return X position'''
-        return self.x
-        
-    def get_y(self):
-        '''Return Y position'''
-        return self.y
-
-def Quit():
-    '''Quiiiiiiiit!!!'''
-    curses.endwin()
-    quit()
-
-class Menu:
-    ''''Where everything begins, the Menu (main too)'''	
-    def __init__(self):
-        #self.Cursor = MoveCursor(2,0,0,0,1,1,2,5,0,0) # give the rules to MoveCursor Object
-        self.Cursor = MoveCursor(2,0) # give the rules to MoveCursor Object
-        
-        self.main()
-
-    def henshin_a_gogo_baby(self):
-        '''A name inspired in Viewtiful Joe game, lol. It checks the cursor position and HENSHIN A GOGO BABY'''
-        #if self.Cursor.get_x() == 2:
-        #gogo = Table()
-        
-        board = GameBoard(4, 2, 2)
-        board.moveCursor()
-
-        if self.Cursor.get_x() == 5:
-            Quit()
-    
-    def main(self):
-        '''The main :|'''
-        while True:
-            
-            screen.clear()
-            self.henshin_a_gogo_baby()
-            event = screen.getch()
-            #self.henshin_a_gogo_baby()
-            if event == ord("q"): 
-                Quit()
-            """
-            screen.addstr(" Sudoku \n\n", curses.color_pair(3))
-            screen.addstr("  Play\n")
-            screen.addstr("  Help\n")
-            screen.addstr("  About\n")
-            screen.addstr("  Quit\n")
-            
-            
-            self.Cursor.Move('actual')
-            event = screen.getch()
-            #self.henshin_a_gogo_baby()
-            if event == ord("q"): 
-                Quit()
-            elif event == curses.KEY_UP:
-                self.Cursor.Move('up')
-            elif event == curses.KEY_DOWN:
-                self.Cursor.Move('down')
-            elif event == 10:
-                self.henshin_a_gogo_baby()
-            """
-
-if __name__ == '__main__': 
-
-    InitCurses()
-    run_for_your_life = Menu() # The menu
-    curses.napms(3000)
-    curses.endwin()
