@@ -564,7 +564,7 @@ while True:
     emotion = thefunction(counter)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
+    screen.nodelay()
     event = screen.getch()
     if event == ord("w"): 
         Quit()
