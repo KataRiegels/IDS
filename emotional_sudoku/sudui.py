@@ -1,3 +1,19 @@
+import argparse
+import os
+import sys
+import time
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import cv2
+import numpy as np
+from tensorflow.keras.layers import (Conv2D, Dense, Dropout, Flatten,
+                                     MaxPooling2D)
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Flatten
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import MaxPooling2D
+
+import subprocess
 import math
 import curses
 import random
@@ -38,7 +54,6 @@ class Board():
     '''The game board'''
     def __init__(self,sudoku_size,init_x, init_y, horjump = 3, verjump = 1):
         lists = [N(0)]*sudoku_size
-        print(lists)
         #Number(0),Number(0),Number(0),Number(0),Number(0),Number(0),Number(0),Number(0),Number(0)
         self.Board = [[N(0)]*sudoku_size for i in range(sudoku_size)]
         #self.Board = [[Number(0)]*sudoku_size]*sudoku_size # create the Board
@@ -179,8 +194,9 @@ class GameBoard(Board):
             self.cursor.Move('actual')
             self.printcolor = curses.color_pair(2)
             event = screen.getch()
-            if event == ord("q"): 
+            if event == ord("w"): 
                 Quit()
+                return
             elif event == (curses.KEY_LEFT or "w"):
                 self.current_column -= 1
             elif event == curses.KEY_RIGHT:
@@ -370,7 +386,7 @@ class MoveCursor:
 def Quit():
     '''Quiiiiiiiit!!!'''
     curses.endwin()
-    quit()
+    #quit()
 
 class Menu:
     ''''Where everything begins, the Menu (main too)'''	
@@ -421,131 +437,143 @@ class Menu:
             elif event == 10:
                 self.henshin_a_gogo_baby()
             """
-
+"""
 if __name__ == '__main__': 
 
     InitCurses()
     run_for_your_life = Menu() # The menu
     curses.napms(3000)
     curses.endwin()
+"""
 
 
 
 
+if sys.platform == 'linux':
+    from gpiozero import CPUTemperature
+
+# input arg parsing
+parser = argparse.ArgumentParser()
+parser.add_argument('-f', '--fullscreen',
+                    help='Display window in full screen', action='store_true')
+parser.add_argument(
+    '-d', '--debug', help='Display debug info', action='store_true')
+parser.add_argument(
+    '-fl', '--flip', help='Flip incoming video signal', action='store_true')
+args = parser.parse_args()
+
+# create model (convolutional nn)
+model = Sequential()
+
+model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(48, 48, 1)))
+model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+model.add(Flatten())
+model.add(Dense(1024, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(7, activation='softmax'))
+
+model.load_weights('model.h5')
+
+# prevents openCL usage and unnecessary logging messages
+cv2.ocl.setUseOpenCL(False)
+
+# dictionary which assigns each label an emotion (alphabetical order)
+emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful",
+                3: "Horny", 4: "Neutral", 5: "Sad", 6: "Surprised"}
+
+def get_gpu_temp():
+    temp = subprocess.check_output(['vcgencmd measure_temp | egrep -o \'[0-9]*\.[0-9]*\''],
+                                    shell=True, universal_newlines=True)
+    return str(float(temp))
+
+def above10(dic:dict):
+    for i in dic:
+        if dic[i] > 10:
+            dic[i] = 0
+            return i
+    return None
 
 
-class Table:
-    '''Table where we play. The board is in the table and the players are sitting right next to it :)'''	
-    def __init__(self):
-        self.Board = GameBoard(4, 2, 2)
-        #self.Cursor = MoveCursor(3,3,3,3,1,1,3,13,3,29) # give the rules to MoveCursor Object
-        self.Cursor = MoveCursor(2,2) # give the rules to MoveCursor Object
-        
-        self.ChosenColumn = 0 # my dchosen column
-        self.ChosenRow = 0 # my chosen row
-        self.Think() # The main
-        
-    def ChosenRowColumn(self, row, column):
-        m = 8
-        '''A method to get the right Row and Column to put the number and control the jump the cursor have to do in the game'''
-        self.ChosenRow = row
-        self.ChosenColumn = column		
-        if self.ChosenRow < 0:
-            self.ChosenRow = m
-        elif self.ChosenRow > m:
-            self.ChosenRow = 0
-        elif self.ChosenColumn < 0:
-            self.ChosenColumn = m
-        elif self.ChosenColumn > m:
-            self.ChosenColumn = 0
-            
-    def ForceBorderJump(self, keypress):
-        '''Force the jump in the border when moving the cursor'''
-        pass
-        """
-        if keypress == 'right':
-            if self.Cursor.get_x() == 12 or self.Cursor.get_x() == 22:
-                self.Cursor.x = self.Cursor.get_x()+1
-        elif keypress == 'left':
-            if self.Cursor.get_x() == 10 or self.Cursor.get_x() == 20:
-                self.Cursor.x = self.Cursor.get_x()-1
-        elif keypress == 'up':
-            if self.Cursor.get_y() == 6 or self.Cursor.get_y() == 10:
-                self.Cursor.y = self.Cursor.get_y()-1
-        elif keypress == 'down':
-            if self.Cursor.get_y() == 6 or self.Cursor.get_y() == 10:
-                self.Cursor.y = self.Cursor.get_y()+1
-        """
+# start the webcam feed
+cap = cv2.VideoCapture(0)
+counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+
+def thefunction(counter):
+    result = above10(counter)
+    if result:
+        counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        print(emotion_dict[result])
 
 
+    # time for fps
+    start_time = time.time()
+
+    # Find haar cascade to draw bounding box around face
+    ret, frame = cap.read()
+    if args.flip:
+        frame = cv2.flip(frame, 0)
+    if not ret:
+        return
+    facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+
+    for (x, y, w, h) in faces:
+        cv2.rectangle(frame, (x, y-50), (x+w, y+h+10), (255, 0, 0), 2)
+        roi_gray = gray[y:y + h, x:x + w]
+        cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
+        prediction = model.predict(cropped_img)
+        #print(prediction)
+        maxindex = int(np.argmax(prediction))
+        counter[maxindex] += 1
+        cv2.putText(frame, emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+    # full screen
+    if args.fullscreen:
+        cv2.namedWindow("video", cv2.WND_PROP_FULLSCREEN)
+        cv2.setWindowProperty("video", cv2.WND_PROP_FULLSCREEN, 1)
+
+    # debug info
+    if args.debug:
+        fps = str(int(1.0 / (time.time() - start_time)))
+        cv2.putText(frame, fps + " fps", (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+        if sys.platform == 'linux':
+            cpu_temp = str(int(CPUTemperature().temperature)) + " C (CPU)"
+            cv2.putText(frame, cpu_temp, (20, 95), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+            cv2.putText(frame, get_gpu_temp() + " C (GPU)", (20, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+    cv2.imshow('video', cv2.resize(
+        frame, (800, 480), interpolation=cv2.INTER_CUBIC))
+    return result
+
+InitCurses()
+board = GameBoard(4, 2, 2)
+while True:
     
-    def matrixToInner(self, soduko_size, current_x, current_y, init_x, init_y, jumpx = 3, jumpy = 1):
-        outer_x = current_x + int(current_x/soduko_size)
-        outer_y = current_y + int(current_y/soduko_size)
-        inner_x = jumpx * outer_x + init_x + (jumpx + math.ceil(jumpx/2)) #length + length / 2
-        inner_y = jumpy * outer_y + init_y + (jumpy + math.ceil(jumpy/2))
-        return [inner_x, inner_y]
 
+    screen.clear()
+    board.update()
+    emotion = thefunction(counter)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-
-    def Think(self):
-        '''Method where we read the keyboard keys and think in the game :P'''
-        list = [ ] # create a list with numbers from 9 to 1. We will get the index from the event. example: 57-49=8, but the 8 number is the number 1 so we reverse the list so the index is correct :)
-        for i in range (1,10):
-            list.append(i)
-        list.reverse()
-        while True:
-            screen.clear()
-            self.Board.Print()
-            #if self.Board.SomebodyWonPopcorn(): # checks if he won :P
-             #   ScreenInfo("YOU WIIIIIIIIN!!! :)",2)
-              #  screen.getch()
-               # break
-            self.Cursor.Move('actual')
-            event = screen.getch()
-            if event == ord("q"): 
-                Quit()
-            elif event == (curses.KEY_LEFT or "w"):
-                self.Cursor.Move('left')
-                self.ChosenRowColumn(self.ChosenRow,self.ChosenColumn-1)
-                self.ForceBorderJump('left')
-            elif event == curses.KEY_RIGHT:
-                self.Cursor.Move('right')
-                self.ChosenRowColumn(self.ChosenRow,self.ChosenColumn+1)
-                self.ForceBorderJump('right')
-            elif event == curses.KEY_UP:
-                self.Cursor.Move('up')
-                self.ChosenRowColumn(self.ChosenRow-1,self.ChosenColumn)
-                self.ForceBorderJump('up')
-            elif event == curses.KEY_DOWN:
-                self.Cursor.Move('down')
-                self.ChosenRowColumn(self.ChosenRow+1,self.ChosenColumn)
-                self.ForceBorderJump('down')
-            elif event >= 49 and event <= 57: # from 1 to 9
-                self.Board.Play(self.ChosenRow,self.ChosenColumn,list[57-event]) # list[57-event] is the right number from the keyboard
-            elif event == ord("s"): # S key
-                self.Board.Solve(0,0,False)
-
-
-def cellToOuter(soduko_size, number):
-    cell = number + int(number/soduko_size)
-
-
-
-def matrixToInner(soduko_size, current_x, current_y, init_x, init_y, jumpx = 3, jumpy = 1):
-    outer_x = current_x + int(current_x/soduko_size)
-    outer_y = current_y + int(current_y/soduko_size)
-    inner_x = jumpx * outer_x + init_x + (jumpx + math.ceil(jumpx/2)) #length + length / 2
-    inner_y = jumpy * outer_y + init_y + (jumpy + math.ceil(jumpy/2))
-    return [inner_x, inner_y]
-
-
-
-def matrixToOuter(number):
-    pass
-
-
-
+    event = screen.getch()
+    if event == ord("w"): 
+        Quit()
+        quit()
     
+    curses.napms(3000)
+    curses.endwin()
+cap.release()
+cv2.destroyAllWindows()
+
 
 
