@@ -61,9 +61,24 @@ def get_gpu_temp():
                                     shell=True, universal_newlines=True)
     return str(float(temp))
 
+def above10(dic:dict):
+    for i in dic:
+        if dic[i] > 10:
+            dic[i] = 0
+            return i
+    return None
+
+
 # start the webcam feed
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
+counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
 while True:
+    result = above10(counter)
+    if result:
+        counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        print(emotion_dict[result])
+
+
     # time for fps
     start_time = time.time()
 
@@ -82,7 +97,9 @@ while True:
         roi_gray = gray[y:y + h, x:x + w]
         cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
         prediction = model.predict(cropped_img)
+        #print(prediction)
         maxindex = int(np.argmax(prediction))
+        counter[maxindex] += 1
         cv2.putText(frame, emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
     # full screen
