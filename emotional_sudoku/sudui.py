@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import time
+import threading
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import cv2
@@ -189,6 +190,7 @@ class GameBoard(Board):
         starty = 50
         startx = 20
         while True:
+            screen.nodelay(False)
             #screen.clear()
             self.Print()
             self.cursor.Move('actual')
@@ -555,23 +557,52 @@ def thefunction(counter):
     return result
 
 InitCurses()
+
 board = GameBoard(4, 2, 2)
+
+def sudPart():
+    while True:
+        screen.clear()
+        board.update()
+        screen.nodelay(True)
+        event = screen.getch()
+        if event == ord("w"): 
+            Quit()
+            quit()
+        screen.nodelay(False)
+    
+    
+
+def camPart():
+    while True:
+        thefunction(counter)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+t1 = threading.Thread(target=sudPart)     # function is used as argument
+t2 = threading.Thread(target=camPart) 
+t1.start()
+t2.start()
+
+t1.join() 
+t2.join() 
+"""
 while True:
     
 
     screen.clear()
-    board.update()
-    emotion = thefunction(counter)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-    screen.nodelay()
+
+    #board.update()
+    #emotion = thefunction(counter)
+    
+    
     event = screen.getch()
     if event == ord("w"): 
         Quit()
         quit()
-    
-    curses.napms(3000)
-    curses.endwin()
+"""    
+curses.napms(3000)
+curses.endwin()
 cap.release()
 cv2.destroyAllWindows()
 
