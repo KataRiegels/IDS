@@ -1,13 +1,14 @@
 '''
-1. fill one box randomly
-2. fill diagonal randomly
-3. fill rest according to sudoku rules
+1. Create a sudoku:
+    1.1. fill one box randomly
+    1.2. fill diagonal randomly
+2. Only add distinct sudokus to a list
 '''
 
 import random as rand
 
 # method for filling a box randomly
-def fillBox():
+def fillBox(grid):
     numberOfRows = 4
 
     a = []
@@ -26,7 +27,7 @@ def fillBox():
     grid[1].append(a[3])
 
 # method for filling the diagonal randomly
-def fillDiagonal():
+def fillDiagonal(grid):
     
     num1 = rand.randint(1,4)
     for i in range(2):
@@ -42,19 +43,53 @@ def fillDiagonal():
     grid[3].append(num2)
 
 # method for filling the rest with zeros
-def fillRest():
+def fillRest(grid):
     for col in grid:
         while len(col) < 4:
             col.append(0)
 
 # method for displaying sudoku grid
-def displaySudoku():
+def displaySudoku(grid):
     for col in grid:
         print(col)
 
+# method for creating n different sudokus
+def createSudokus(numberOfSudokus):
+    n = numberOfSudokus
+    sudokus = []    # list of grids
 
-grid = [[] for i in range(4)]   # creates empty grid
-fillBox()               # fills top right box randomly
-fillDiagonal()          # fills the diagonal randomly
-fillRest()              # fills rest with zeros
-displaySudoku()         # prints the sudoku grid
+    for j in range(n):
+        grid = [[] for i in range(4)]   # creates empty grid
+        fillBox(grid)               # fills top left box randomly
+        fillDiagonal(grid)          # fills the diagonal randomly
+        fillRest(grid)              # fills rest with zeros
+        # check if grid is in grids
+        #sudokus.append(grid)
+        
+        if not contains(sudokus,grid):
+            sudokus.append(grid)
+            #print("Sudoku No.",len(sudokus))
+            #displaySudoku(grid)         # prints the sudoku grid
+    return sudokus 
+
+# method for checking if two lists have the same entries
+def sameList(list1, list2):
+    counter = 0
+    for i in range(len(list1)):
+        if list1[i] == list2[i]:
+            counter += 1
+    if counter >= len(list1):
+        return True
+    else:
+        return False
+
+# method for checking if a list of lists already contains a specific list
+def contains(sudokuList, grid):
+    for s in sudokuList:
+        if sameList(s,grid):
+            return True
+    return False
+
+# create all 288 possible sudokus, stored in a list
+sudokus = createSudokus(2000)
+print(len(sudokus))

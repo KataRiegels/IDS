@@ -18,7 +18,7 @@ emoji_dict = {0: "grimace", 1: "wow", 2:"tongue out", 3:"kissy", 4: "null"}
 
 
 #start webcam
-cam = cv2.VideoCapture(1)
+cam = cv2.VideoCapture(0)
 while True:
     font = cv2.FONT_HERSHEY_SIMPLEX
     retval, frame = cam.read()

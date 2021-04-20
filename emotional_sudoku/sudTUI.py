@@ -246,15 +246,15 @@ class GameBoard(Board):
         checkRow = math.ceil(((i+1 / 3)))
         checkColumn = math.ceil(((j+1 / 3)))
         #if checkRow != 0 and checkColumn != 0:
-        checkRow = 3*checkRow-3
-        checkColumn = 3*checkColumn-3
+        checkRow = 3*checkRow-2
+        checkColumn = 3*checkColumn-2
         print(checkRow)
         print(checkColumn)
-        for x in range(3): # check the square
+        for x in range(2): # check the square
             #print(f'x: {x}')
             print(f'x: {x}')
             poo = self.Board[checkRow+x]
-            for y in range(3):
+            for y in range(2):
                 #print(f'len: {len(self.Board[x])}')
                 #print(f'yo: {self.Board[x][y].getNumber()}')
                 print(f'number: {number}')
