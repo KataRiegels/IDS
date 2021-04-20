@@ -27,20 +27,11 @@ screen = curses.initscr()
 
 board_size = 9
 
-def convertToEmoji(number):
-    if number == 1:
-        return ":)"
-    if number == 2:
-        return ":("
-    if number == 3:
-        return ":o"
-    else:
-        return ":*"
+def Quit():
+    curses.endwin()
 
 
-def InitCurses():
-    '''Curses related stuff'''
-    global screen
+def initializeCurses():
     screen = curses.initscr()
     curses.noecho()
     curses.start_color()
@@ -62,203 +53,147 @@ class N:
         self.suit = suit
         self.state = 0
 
+    # Converts the numbers into matching emojis
+    def convertToEmoji(self,number):
+        if number == 0:
+            return "DELETE"
+        if number == 1:
+            return ":)"
+        if number == 2:
+            return ":("
+        if number == 3:
+            return ":o"
+        else:
+            return ":*"
+
+    # Lock number (or opposite)
     def setLock(self):
-        '''Set locked on or not'''
         if self.state == 0:
             self.state = 1
         else:
             self.state = 0	
 
+    # Locked or not
     def getState(self):
-        '''Return if it is locked or not'''
         return self.state
         
+    # Return the actual int
     def getNumber(self):
-        '''Return the number'''
         return self.suit
 
+    # Returns the number converted to emoji
     def numAsEmoji(self):
-        return convertToEmoji(self.getNumber())
+        return self.convertToEmoji(self.getNumber())
 
 
-    def printNumber(self):
-        '''Print the number'''
-        if self.getState() == 1:
-            screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(4))
-        elif self.getState() == 0:
-            screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(1))		
-
-
-
-class Cursor:
-    '''
-    An object to move the cursor with rules 
-    Usage: MoveCursor(initial x position, initial y position, move left jump size, move right jump size, go up jump size, go down jump size, up limit size, down limit size, left limit size, right limit size) 
-    '''
-    def __init__(self, init_x, init_y):
-        self.x = init_x
-        self.y = init_y
-
-
-    def move(self):
-        screen.move(self.y,self.x)
-        
- 
-
-
-
-def Quit():
-    '''Quiiiiiiiit!!!'''
-    curses.endwin()
-    #quit()
-
-class Board():
-    '''The game board'''
-    def __init__(self,sudoku_size,init_x, init_y):
-        self.Board = [[N(0)]*sudoku_size for i in range(sudoku_size)]
-        self.sudsize = sudoku_size
-
-
-class GameBoard(Board):
-    '''The game board'''
+'''  The sudoku game, which contains a board to print and the update function  '''
+class SudokuGame():
     def __init__(self, size, init_x, init_y, horjump = 3, verjump = 1):
-        Board.__init__(self, size, init_x, init_y)
-        #board = Board(self, size, init_x, init_y, horjump, verjump)
-        self.current_row = 0
-        self.current_column = 0
-        #self.init_cursor_x, self.init_cursor_y = init_x + horjump, init_y + verjump
-
-        self.init_x = init_x
-        self.init_y = init_y
+        self.board = [[N(0)]*size for i in range(size)]
         self.sudoku_size = size
-        self.xjump = horjump
-        self.yjump = verjump
-        
 
-
-        self.current_row = 0
-        self.current_column = 0
-        self.cursor = Cursor(self.init_x, self.init_y)
-        self.cursor.x, self.cursor.y = 0,0
+        self.init_x,         self.init_y      = init_x,  init_y
+        self.xjump,          self.yjump       = horjump, verjump
+        self.current_column, self.current_row = 0,       0
         
-        self.printcolor = curses.color_pair(2)
         self.bar_color  = curses.color_pair(6)
         self.input_color = curses.color_pair(3)
         self.moveCursor()
-    
-    
 
 
-
+    ''' Prints the board as it currently is.''' 
     def Print(self):
-        '''Method to print our game board'''
         hor_square_bars = "  " + "-" * ((self.sudoku_size+self.sudSqrt()) * 3 - 1)
         ver_bar = self.printfield("|")
         extraY = 1
-
-        screen.addstr(self.init_y, self.init_x, hor_square_bars, self.bar_color) 
-
-        for y in range(self.sudoku_size): 
+        
+        
+        screen.addstr(self.init_y, self.init_x, hor_square_bars, self.bar_color)        # prints the upper line
+        # prints everything on the board as well as the vertical bars and inner horizontal lines
+        for y in range(self.sudoku_size):
+            # Checking whether there needs to be a horizontal line
             if ((y+1) % self.sudSqrt() == 1) and (y+1 > self.sudSqrt()):
                 screen.addstr(self.init_y+y+extraY, self.init_x, hor_square_bars, self.bar_color)
                 extraY += 1
-            
-            screen.addstr(self.init_y+y+extraY, self.init_x, ver_bar, self.bar_color)
+            screen.addstr(self.init_y+y+extraY, self.init_x, ver_bar, self.bar_color)   # Left-most bar
+
             for x in range(self.sudoku_size):
+                # Checks when to draw bar
                 if ((x+1) % self.sudSqrt() == 1) and (x+1 > self.sudSqrt()):
                     screen.addstr(ver_bar, self.bar_color)
-                if self.Board[x][y].getNumber() != 0:
-                    screen.addstr(self.printfield(self.Board[x][y].numAsEmoji()), self.input_color)
+                # Print either the emoji or whitespaces if cell has not been filled
+                if self.board[x][y].getNumber() != 0:
+                    screen.addstr(self.printfield(self.board[x][y].numAsEmoji()), self.input_color)
                 else:
                     screen.addstr(self.printfield(" "))
-            screen.addstr(ver_bar, self.bar_color)
-        screen.addstr(self.init_y + self.sudoku_size + extraY, self.init_x, hor_square_bars, self.bar_color) 
+            screen.addstr(ver_bar, self.bar_color)                                       # right-most bar
+        screen.addstr(self.init_y + self.sudoku_size + extraY, self.init_x, hor_square_bars, self.bar_color) # lower line
         
 
 
-
-    def matrixToInner(self, current_x, current_y, jumpx = 3, jumpy = 1):
+    ''' Takes a sudoku cell and moves the blinking curser there showing player where they are about to enter emoji.
+        Also considers the "jumps" around lines and bars'''
+    def sudokuToScreenCoord(self, current_x, current_y, jumpx = 3, jumpy = 1):
         outer_x = current_x + math.floor(current_x/math.sqrt(self.sudoku_size))
         outer_y = current_y + math.floor(current_y/math.sqrt(self.sudoku_size))
-        inner_x = jumpx * outer_x + self.init_x + (jumpx + 1) #+ math.ceil(jumpx/2)) #length + length / 2
-        inner_y = jumpy * outer_y + self.init_y + (jumpy) # + math.ceil(jumpy/2))
+        inner_x = jumpx * outer_x + self.init_x + (jumpx + 1) 
+        inner_y = jumpy * outer_y + self.init_y + (jumpy) 
         return [inner_x, inner_y]
 
+    ''' Sets the cursor position based on current position on sudoku board    '''
     def moveCursor(self):
-        pos = self.matrixToInner(self.current_column, self.current_row)
-        self.cursor.x, self.cursor.y = pos[0],pos[1]
-        self.cursor.move()
-        
+        pos = self.sudokuToScreenCoord(self.current_column, self.current_row)
+        screen.move(pos[1], pos[0])
 
+    ''' The whole update of the sudoku, such as moving on the table and playing an emoji '''
     def update(self, arg):
-        '''Method where we read the keyboard keys and think in the game :P'''
-        if True:
-            screen.nodelay(True)
-            self.moveCursor()
-
+        
+        screen.clear()
+        screen.nodelay(True)
+        self.moveCursor()
+        
+        screen.addstr(10, 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
+        screen.addstr(N(arg).numAsEmoji(), curses.color_pair(5))
+        self.Print()
+        self.moveCursor()
+        event = screen.getch()
+        if event == ord("w"): 
+            Quit()
+            quit()
+            return
+        elif event == curses.KEY_LEFT:
+            self.current_column -= 1
+            if self.current_column < 0:
+                self.current_column = self.sudoku_size -1
+        elif event == curses.KEY_RIGHT:
+            self.current_column += 1
+            if self.current_column > self.sudoku_size -1:
+                self.current_column = 0
+        elif event == curses.KEY_UP:
+            self.current_row -= 1
+            if self.current_row < 0:
+                self.current_row = self.sudoku_size -1
+        elif event == curses.KEY_DOWN:
+            self.current_row += 1
+            if self.current_row > self.sudoku_size -1:
+                self.current_row = 0
+        elif event == 10:
+            screen.nodelay(False)
+            self.board[self.current_column][self.current_row] = N(arg)
             self.Print()
-            self.moveCursor()
-            number = arg
-            
-            screen.addstr(10, 10 , f'Emoji to enter: {N(number).numAsEmoji()}')
-            self.moveCursor()
-            self.Print()
-            self.moveCursor()
-            event = screen.getch()
-            if event == ord("w"): 
-                Quit()
-                quit()
-                return
-            elif event == (curses.KEY_LEFT):
-                self.current_column -= 1
-                if self.current_column < 0:
-                    self.current_column = 3
-            elif event == curses.KEY_RIGHT:
-                self.current_column += 1
-                if self.current_column > 3:
-                    self.current_column = 0
-            elif event == curses.KEY_UP:
-                self.current_row -= 1
-                if self.current_row < 0:
-                    self.current_row = 3
-            elif event == curses.KEY_DOWN:
-                self.current_row += 1
-                if self.current_row > 3:
-                    self.current_row = 0
-            elif event == 10:
-                screen.nodelay(False)
-                self.Board[self.current_column][self.current_row] = N(number)
-                self.Print()
-            self.moveCursor()
+        self.moveCursor()
             
 
-
+    # Simply returns the square root of the size
     def sudSqrt(self):
         return int(math.sqrt(self.sudoku_size))
 
-
+    # Makes sure the input for a cell will stay somewhat in the middle. Flexible on cell-size
     def printfield(self, inp):
         inp = str(inp)
         left  = " " * ( + int((self.xjump- len(str(inp)))/2))
         right = " " * (self.xjump - len(left) - len(str(inp)))
         return left + inp + right
-
-    def Fill(self):
-        '''Fill the board with random numbers so we can create random Sudoku'''
-        for x in range(0,self.sudoku_size): # first we fill the board with 0's
-            for y in range(0,self.sudoku_size):
-                self.Board[x].append(N(0))
-
-    def setNumber(self, x, y, number, state):
-        '''Set the desired number and lock it if True'''
-        self.Board[x][y] = N(number)
-
-    def Play(self,x,y, number):
-        '''The play method :)'''
-        self.setNumber(x,y,number,False)
-  
-
-
 
 
 
@@ -271,10 +206,6 @@ if sys.platform == 'linux':
 
 class CamDetection():
         
-
-
-    # dictionary which assigns each label an emotion (alphabetical order)
-
     def __init__(self):
         self.result = 4
 
@@ -332,9 +263,6 @@ class CamDetection():
 
 
     def thefunction(self):
-        #finalresult = 4
-
-
         # time for fps
         start_time = time.time()
 
@@ -353,11 +281,11 @@ class CamDetection():
             roi_gray = gray[y:y + h, x:x + w]
             cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
             prediction = self.model.predict(cropped_img)
-            #print(prediction)
             maxindex = int(np.argmax(prediction))
             self.counter[maxindex] += 1
             cv2.putText(frame, self.emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
         print(f'counter: {self.counter}')
+
         # full screen
         if self.args.fullscreen:
             cv2.namedWindow("video", cv2.WND_PROP_FULLSCREEN)
@@ -373,109 +301,49 @@ class CamDetection():
                 cv2.putText(frame, get_gpu_temp() + " C (GPU)", (20, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         cv2.imshow('video', cv2.resize(
             frame, (800, 480), interpolation=cv2.INTER_CUBIC))
-        #result = above10(counter, result)
-        #dic = self.counter
         for i in self.counter:
             if self.counter[i] >= 10:
                 self.result = i
                 print(self.result)
-                #self.counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
                 print(f'emo dict: {self.emotion_dict[self.result]}')
                 for i in self.counter:
                     self.counter[i] = 0
-        #if result != 4:
-            #finalresult = result
 
 
 
-InitCurses()
+initializeCurses()
 cam = CamDetection()
 
-board = GameBoard(4, 2, 2)
-result = None
+board = SudokuGame(4, 2, 2)
 
+''' The thread that deals with the sudoku game'''
 def sudPart():
     while True:
-        try:
-            #result = in_q.get()
-            screen.clear()
-            
-            #print(f'sudpart result: {cam.result}')
-            
-            board.update(arg = cam.result)
-            screen.nodelay(True)
-            event = screen.getch()
-            if event == ord("w"): 
-                Quit()
-                quit()
-        except:
-            print("SUDPART BROKE")
-            break
-        #screen.nodelay(False)
-    
+        screen.clear()
+        board.update(arg = cam.result)
+        screen.nodelay(True)
+        event = screen.getch()
+        if event == ord("w"): 
+            Quit()
+            quit()
     
 
-#def camPart(out_q):
+''' The thread that deals with the emotion detecction'''
 def camPart():
-
     while True:
-        try:
-            cam.thefunction()
-            result = cam.result
-            #if result != None:
-            #out_q.put(result)
-            #print(f'result: {result}')
-            #print(f'out_q: {out_q}')
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        except:
-            print("cat part BroKE")
+        cam.thefunction()
+        result = cam.result
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
 
-try:
-    #q = Queue()
-    #t2 = threading.Thread(target=sudPart, args = (q, )) 
-    #t1 = threading.Thread(target=camPart, args = (q, ))     # function is used as argument
-    t2 = threading.Thread(target=sudPart) 
-    t1 = threading.Thread(target=camPart)     # function is used as argument
+''' Threading the soduko game and the camera together'''
+t2 = threading.Thread(target=sudPart) 
+t1 = threading.Thread(target=camPart)     
+t1.start(); t2.start()
+t1.join();  t2.join() 
 
-    t1.start()
-    t2.start()
-
-
-    #q.join()
-    t2.join() 
-    t1.join()
-except:
-    print("didnt work") 
-"""
-while True:
-    result = thefunction(counter)
-    #if result != None:
-     #   out_q.put(result)
-    print(f'result: {result}')
-    #print(f'out_q: {out_q}')
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-"""
-
-"""
-while True:
-    
-
-    screen.clear()
-
-    #board.update()
-    #emotion = thefunction(counter)
-    
-    
-    event = screen.getch()
-    if event == ord("w"): 
-        Quit()
-        quit()
-"""    
-curses.napms(3000)
+# Make sure everything is closed
 curses.endwin()
 cam.cap.release()
 cv2.destroyAllWindows()
