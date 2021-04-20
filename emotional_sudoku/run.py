@@ -70,7 +70,7 @@ while True:
     # Find haar cascade to draw bounding box around face
     ret, frame = cap.read()
     if args.flip:
-        frame = cv2.flip(frame, -1)
+        frame = cv2.flip(frame, 0)
     if not ret:
         break
     facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
