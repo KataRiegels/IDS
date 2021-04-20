@@ -1,16 +1,13 @@
 import argparse
 import os
 import sys
-import time
-import threading
-from queue import Queue
-import copy
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import cv2
 import numpy as np
-from tensorflow.keras.layers import (Conv2D, Dense, Dropout, Flatten,
-                                     MaxPooling2D)
+
+import time
+from tensorflow.keras.layers import (Conv2D, Dense, Dropout, Flatten, MaxPooling2D)
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten
 from tensorflow.keras.layers import Conv2D
@@ -19,10 +16,12 @@ from tensorflow.keras.layers import MaxPooling2D
 import subprocess
 import math
 import curses
-import random
-from random import shuffle
-from past.builtins import (str as oldstr, range, reduce,
-                               raw_input, xrange)
+
+import threading
+
+
+
+
 screen = curses.initscr()
 
 board_size = 9
@@ -103,7 +102,7 @@ class SudokuGame():
 
     ''' Prints the board as it currently is.''' 
     def Print(self):
-        hor_square_bars = "  " + "-" * ((self.sudoku_size+self.sudSqrt()) * 3 - 1)
+        hor_square_bars = "  " + "-" * ((self.sudoku_size+self.sudSqrt()) * self.xjump - 1)
         ver_bar = self.printfield("|")
         extraY = 1
         
@@ -133,11 +132,11 @@ class SudokuGame():
 
     ''' Takes a sudoku cell and moves the blinking curser there showing player where they are about to enter emoji.
         Also considers the "jumps" around lines and bars'''
-    def sudokuToScreenCoord(self, current_x, current_y, jumpx = 3, jumpy = 1):
+    def sudokuToScreenCoord(self, current_x, current_y):
         outer_x = current_x + math.floor(current_x/math.sqrt(self.sudoku_size))
         outer_y = current_y + math.floor(current_y/math.sqrt(self.sudoku_size))
-        inner_x = jumpx * outer_x + self.init_x + (jumpx + 1) 
-        inner_y = jumpy * outer_y + self.init_y + (jumpy) 
+        inner_x = self.xjump * outer_x + self.init_x + (self.xjump + 1) 
+        inner_y = self.yjump * outer_y + self.init_y + (self.yjump) 
         return [inner_x, inner_y]
 
     ''' Sets the cursor position based on current position on sudoku board    '''
@@ -152,7 +151,7 @@ class SudokuGame():
         screen.nodelay(True)
         self.moveCursor()
         
-        screen.addstr(10, 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
+        screen.addstr((self.sudoku_size+self.sudSqrt() * self.xjump ) , 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
         screen.addstr(N(arg).numAsEmoji(), curses.color_pair(5))
         self.Print()
         self.moveCursor()
@@ -314,7 +313,7 @@ class CamDetection():
 initializeCurses()
 cam = CamDetection()
 
-board = SudokuGame(4, 2, 2)
+board = SudokuGame(board_size, 2, 2)
 
 ''' The thread that deals with the sudoku game'''
 def sudPart():
