@@ -3,6 +3,8 @@ import os
 import sys
 import time
 import threading
+from queue import Queue
+import copy
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import cv2
@@ -50,6 +52,83 @@ def InitCurses():
     curses.init_pair(5, curses.COLOR_RED, curses.COLOR_BLACK)
     screen.keypad(1)
 
+
+
+class N:
+    '''Object number'''		
+    def __init__(self, suit):
+        self.suit = suit
+        self.state = 0
+
+    def setLock(self):
+        '''Set locked on or not'''
+        if self.state == 0:
+            self.state = 1
+        else:
+            self.state = 0	
+
+    def getState(self):
+        '''Return if it is locked or not'''
+        return self.state
+        
+    def getNumber(self):
+        '''Return the number'''
+        return self.suit
+
+    def printNumber(self):
+        '''Print the number'''
+        if self.getState() == 1:
+            screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(4))
+        elif self.getState() == 0:
+            screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(1))		
+
+
+
+class MoveCursor:
+    '''
+    An object to move the cursor with rules 
+    Usage: MoveCursor(initial x position, initial y position, move left jump size, move right jump size, go up jump size, go down jump size, up limit size, down limit size, left limit size, right limit size) 
+    '''
+    board_size = 24
+    
+    jumplen_hor = 1
+    jumplen_ver = 1
+
+
+
+    def __init__(self, init_x, init_y, lines_to_skip = None, lines_to_skip_input = None):
+        self.x = init_x
+        self.y = init_y
+        self.leftbound = init_x
+        self.rightbound = init_x + (self.jumplen_hor * self.board_size) -1
+        self.upperbound = init_y
+        self.lowerbound = init_y + (self.jumplen_ver * self.board_size) +  int(math.sqrt(board_size)) -2
+
+
+    def MoveActual(self):
+        screen.move(self.y,self.x)
+        
+    def Move(self,option):
+        
+        if option == 'actual':
+            self.MoveActual()
+        else:
+            Quit() 
+    
+    def get_x(self):
+        '''Return X position'''
+        return self.x
+        
+    def get_y(self):
+        '''Return Y position'''
+        return self.y
+
+
+
+def Quit():
+    '''Quiiiiiiiit!!!'''
+    curses.endwin()
+    #quit()
 
 class Board():
     '''The game board'''
@@ -129,14 +208,6 @@ class GameBoard(Board):
                     inp = self.printfield(self.Board[x][y].getNumber())
                 else:
                     inp = " "
-                """
-                if self.Board[x][y].getNumber() != 0:
-                    #inp = self.Board[x][y].getNumber()
-                    coord = self.matrixToInner(x,y)
-                    pos = []
-                    pos.append(coord)
-                """
-                    
                 lineprint += self.printfield(inp)
             lineprint += self.printfield("|")
             listofprints.append(lineprint)
@@ -181,12 +252,13 @@ class GameBoard(Board):
         self.cursor.Move('actual')
         
 
-    def update(self):
+    def update(self, arg):
         '''Method where we read the keyboard keys and think in the game :P'''
         list = [ ] # create a list with numbers from 9 to 1. We will get the index from the event. example: 57-49=8, but the 8 number is the number 1 so we reverse the list so the index is correct :)
         for i in range (1,10):
             list.append(i)
         list.reverse()
+        print(f'board up: {arg}')
         starty = 50
         startx = 20
         while True:
@@ -194,6 +266,10 @@ class GameBoard(Board):
             #screen.clear()
             self.Print()
             self.cursor.Move('actual')
+            number = arg
+            if number:
+                self.Board[self.current_column][self.current_row] = N(number)
+            self.Print()
             self.printcolor = curses.color_pair(2)
             event = screen.getch()
             if event == ord("w"): 
@@ -207,7 +283,22 @@ class GameBoard(Board):
                 self.current_row -= 1
             elif event == curses.KEY_DOWN:
                 self.current_row += 1
+            elif event == curses.KEY_ENTER:
+                #screen.nodelay(False)
+                self.Print()
+                notEnter = True
+                while notEnter:
+                    number = arg
+                    self.Board[self.current_column][self.current_row] = N(number)
+                    #self.cursor.Move('actual')
+                    
+                    self.Print()
+                    key = screen.getch()
+                    if key == 10:
+                        notEnter = False
+                    #    screen.nodelay(True)
             #elif event >= 
+            """
             elif event >= 48 and event <= 57: # from 1 to 9
                 number = event-48
                 self.Print()
@@ -228,7 +319,7 @@ class GameBoard(Board):
                         number = (number)*multiplier + key-48
                         multiplier *= 10
                 self.Board[self.current_column][self.current_row] = N(number)
-
+            """
             self.moveCursor()
             
 
@@ -244,7 +335,6 @@ class GameBoard(Board):
         inp = str(inp)
         left  = " " * ( + int((self.xjump- len(str(inp)))/2))
         right = " " * (self.xjump - len(left) - len(str(inp)))
-        print("*" + left + inp + right + "*")
         return left + inp + right
 
     def Fill(self):
@@ -268,177 +358,6 @@ class GameBoard(Board):
 
 
 
-class N:
-    '''Object number'''		
-    def __init__(self, suit):
-        self.suit = suit
-        self.state = 0
-
-    def setLock(self):
-        '''Set locked on or not'''
-        if self.state == 0:
-            self.state = 1
-        else:
-            self.state = 0	
-
-    def getState(self):
-        '''Return if it is locked or not'''
-        return self.state
-        
-    def getNumber(self):
-        '''Return the number'''
-        return self.suit
-
-    def printNumber(self):
-        '''Print the number'''
-        if self.getState() == 1:
-            screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(4))
-        elif self.getState() == 0:
-            screen.addstr("%s " % convertToEmoji(self.getNumber()), curses.color_pair(1))		
-
-
-
-class MoveCursor:
-    '''
-    An object to move the cursor with rules 
-    Usage: MoveCursor(initial x position, initial y position, move left jump size, move right jump size, go up jump size, go down jump size, up limit size, down limit size, left limit size, right limit size) 
-    '''
-    board_size = 24
-    
-    jumplen_hor = 1
-    jumplen_ver = 1
-
-
-
-    def __init__(self, init_x, init_y, lines_to_skip = None, lines_to_skip_input = None):
-        self.x = init_x
-        self.y = init_y
-        self.leftbound = init_x
-        self.rightbound = init_x + (self.jumplen_hor * self.board_size) -1
-        self.upperbound = init_y
-        self.lowerbound = init_y + (self.jumplen_ver * self.board_size) +  int(math.sqrt(board_size)) -2
-
-
-
-    """
-    def __init__(self,initial_x,initial_y,left,right,up,down,x_up_max,x_down_max,y_left_max,y_right_max):
-        self.x           = initial_x
-        self.y           = initial_y
-        self.initial_x   = initial_x
-        self.initial_y   = initial_x
-        self.move_left   = left
-        self.move_right  = right
-        self.move_up     = up
-        self.move_down   = down
-        self.x_up_max    = x_up_max
-        self.y_left_max  = y_left_max
-        self.x_down_max  = x_down_max
-        self.y_right_max = y_right_max
-    """
-    def MoveLeft(self):
-        self.x = self.x - self.jumplen_hor
-        if self.x < self.leftbound:
-            self.x = self.rightbound
-
-    def MoveRight(self):
-        self.x = self.x+self.jumplen_hor
-        if self.x > self.rightbound:
-            self.x = self.leftbound
-
-    def MoveUp(self):
-        self.y = self.y-self.jumplen_ver
-        if self.y < self.upperbound:
-            self.y = self.lowerbound
-
-    def MoveDown(self):
-        self.y = self.y+self.jumplen_ver
-        if self.y > self.lowerbound:
-            self.y = self.upperbound
-
-
-    def MoveActual(self):
-        screen.move(self.y,self.x)
-        
-    def Move(self,option):
-        if option == 'left':
-            self.MoveLeft()
-        elif option == 'right':
-            self.MoveRight()
-        elif option == 'up':
-            self.MoveUp()
-        elif option == 'down':
-            self.MoveDown()
-        elif option == 'initial':
-            self.MoveInitial()
-        elif option == 'actual':
-            self.MoveActual()
-        else:
-            Quit() 
-    
-    def get_x(self):
-        '''Return X position'''
-        return self.x
-        
-    def get_y(self):
-        '''Return Y position'''
-        return self.y
-
-
-
-def Quit():
-    '''Quiiiiiiiit!!!'''
-    curses.endwin()
-    #quit()
-
-class Menu:
-    ''''Where everything begins, the Menu (main too)'''	
-    def __init__(self):
-        #self.Cursor = MoveCursor(2,0,0,0,1,1,2,5,0,0) # give the rules to MoveCursor Object
-        self.Cursor = MoveCursor(2,0) # give the rules to MoveCursor Object
-        
-        self.main()
-
-    def henshin_a_gogo_baby(self):
-        '''A name inspired in Viewtiful Joe game, lol. It checks the cursor position and HENSHIN A GOGO BABY'''
-        #if self.Cursor.get_x() == 2:
-        #gogo = Table()
-        
-        board = GameBoard(4, 2, 2)
-        board.update()
-
-        if self.Cursor.get_x() == 5:
-            Quit()
-    
-    def main(self):
-        '''The main :|'''
-        while True:
-            
-            screen.clear()
-            self.henshin_a_gogo_baby()
-            event = screen.getch()
-            #self.henshin_a_gogo_baby()
-            if event == ord("q"): 
-                Quit()
-            """
-            screen.addstr(" Sudoku \n\n", curses.color_pair(3))
-            screen.addstr("  Play\n")
-            screen.addstr("  Help\n")
-            screen.addstr("  About\n")
-            screen.addstr("  Quit\n")
-            
-            
-            self.Cursor.Move('actual')
-            event = screen.getch()
-            #self.henshin_a_gogo_baby()
-            if event == ord("q"): 
-                Quit()
-            elif event == curses.KEY_UP:
-                self.Cursor.Move('up')
-            elif event == curses.KEY_DOWN:
-                self.Cursor.Move('down')
-            elif event == 10:
-                self.henshin_a_gogo_baby()
-            """
 """
 if __name__ == '__main__': 
 
@@ -502,18 +421,15 @@ def above10(dic:dict):
         if dic[i] > 10:
             dic[i] = 0
             return i
-    return None
+    return 4
 
 
 # start the webcam feed
 cap = cv2.VideoCapture(0)
 counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
-
+#finalresult = 1
 def thefunction(counter):
-    result = above10(counter)
-    if result:
-        counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
-        print(emotion_dict[result])
+    #finalresult = 4
 
 
     # time for fps
@@ -538,7 +454,7 @@ def thefunction(counter):
         maxindex = int(np.argmax(prediction))
         counter[maxindex] += 1
         cv2.putText(frame, emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-
+    print(f'counter: {counter}')
     # full screen
     if args.fullscreen:
         cv2.namedWindow("video", cv2.WND_PROP_FULLSCREEN)
@@ -554,38 +470,67 @@ def thefunction(counter):
             cv2.putText(frame, get_gpu_temp() + " C (GPU)", (20, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
     cv2.imshow('video', cv2.resize(
         frame, (800, 480), interpolation=cv2.INTER_CUBIC))
+    result = above10(counter)
+    if result != 4:
+        #finalresult = result
+        counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        print(f'emo dict: {emotion_dict[result]}')
+
     return result
 
 InitCurses()
 
 board = GameBoard(4, 2, 2)
-
-def sudPart():
+result = None
+def sudPart(in_q):
     while True:
+        result = in_q.get()
         screen.clear()
-        board.update()
+        
+        print(f'sudpart result: {result}')
+        
+        board.update(arg = result)
         screen.nodelay(True)
         event = screen.getch()
         if event == ord("w"): 
             Quit()
             quit()
-        screen.nodelay(False)
+        #screen.nodelay(False)
     
     
 
-def camPart():
+def camPart(out_q):
     while True:
-        thefunction(counter)
+        result = thefunction(counter)
+        if result != None:
+            out_q.put(result)
+        #print(f'result: {result}')
+        #print(f'out_q: {out_q}')
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-t1 = threading.Thread(target=sudPart)     # function is used as argument
-t2 = threading.Thread(target=camPart) 
+q = Queue()
+t2 = threading.Thread(target=sudPart, args = (q, )) 
+t1 = threading.Thread(target=camPart, args = (q, ))     # function is used as argument
+
 t1.start()
 t2.start()
 
-t1.join() 
+
+#q.join()
 t2.join() 
+t1.join() 
+"""
+while True:
+    result = thefunction(counter)
+    #if result != None:
+     #   out_q.put(result)
+    print(f'result: {result}')
+    #print(f'out_q: {out_q}')
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+"""
+
 """
 while True:
     
