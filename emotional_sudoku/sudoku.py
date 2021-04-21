@@ -6,11 +6,11 @@
 '''
 
 import random as rand
+import pickle
 
 # method for filling a box randomly
 def fillBox(grid):
     numberOfRows = 4
-
     a = []
     s = set()
     while len(a) < numberOfRows:
@@ -20,13 +20,13 @@ def fillBox(grid):
         if num not in s:
             a.append(num)
             s.add(num)
-    
     grid[0].append(a[0])
     grid[0].append(a[1])
     grid[1].append(a[2])
     grid[1].append(a[3])
 
 # method for filling the diagonal randomly
+# (padded with zeros)
 def fillDiagonal(grid):
     
     num1 = rand.randint(1,4)
@@ -53,19 +53,16 @@ def displaySudoku(grid):
     for col in grid:
         print(col)
 
-# method for creating n different sudokus
+# method for creating different sudokus (n tries)
 def createSudokus(numberOfSudokus):
     n = numberOfSudokus
     sudokus = []    # list of grids
 
     for j in range(n):
         grid = [[] for i in range(4)]   # creates empty grid
-        fillBox(grid)               # fills top left box randomly
-        fillDiagonal(grid)          # fills the diagonal randomly
-        fillRest(grid)              # fills rest with zeros
-        # check if grid is in grids
-        #sudokus.append(grid)
-        
+        fillBox(grid)                   # fills top left box randomly
+        fillDiagonal(grid)              # fills the diagonal randomly
+        fillRest(grid)                  # fills rest with zeros     
         if not contains(sudokus,grid):
             sudokus.append(grid)
             #print("Sudoku No.",len(sudokus))
@@ -92,4 +89,10 @@ def contains(sudokuList, grid):
 
 # create all 288 possible sudokus, stored in a list
 sudokus = createSudokus(2000)
-print(len(sudokus))
+#print(len(sudokus))
+
+# pickling the sudokus
+filename = 'sudoku_pickle'
+outfile = open(filename,'wb')
+pickle.dump(sudokus,outfile)
+outfile.close()

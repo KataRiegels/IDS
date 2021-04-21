@@ -19,7 +19,7 @@ import curses
 
 import threading
 
-
+import pickle
 
 
 screen = curses.initscr()
@@ -347,5 +347,9 @@ curses.endwin()
 cam.cap.release()
 cv2.destroyAllWindows()
 
-
-
+''' Loading the sudoku pickle file '''
+filename = 'sudoku_pickle'
+infile = open(filename,'rb')
+sudoku_list = pickle.load(infile)
+infile.close()
+#print(sudoku_list[0])
