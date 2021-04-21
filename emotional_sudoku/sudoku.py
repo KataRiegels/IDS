@@ -89,7 +89,7 @@ def contains(sudokuList, grid):
 
 # create all 288 possible sudokus, stored in a list
 sudokus = createSudokus(2000)
-#print(len(sudokus))
+#print(sudokus[0])
 
 # pickling the sudokus
 filename = 'sudoku_pickle'
