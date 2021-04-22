@@ -14,7 +14,7 @@ emojidata = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
 #load our label dictionary
 label_dict = {0: "Thumbs up", 1: "Background", 2: "Thumbs Down",
                 3: "Blood"}
-emoji_dict = {0: "grimace", 1: "wow", 2:"tongue out", 3:"kissy", 4: "null"}
+emoji_dict = {0: "grimace", 1: "wow", 2:"tongue out", 3:"kissy"}
 
 
 #start webcam
@@ -45,10 +45,6 @@ while True:
         print(count)
         emojiresult = np.argmax(emoji[0])
         cv2.putText(frame, emoji_dict[int(emojiresult)], (10, 25), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-
-
-
-
     # Draw a rectangle, in the frame
     thumbFrame = cv2.rectangle(frame, (420, 200), (790, 470), (0, 0, 255), 3)
     ##emojiframe = cv2.rectangle(frame, (1,1), (799,479), (255, 0, 0), 3)
