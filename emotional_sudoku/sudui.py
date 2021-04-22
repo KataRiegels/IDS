@@ -1,12 +1,12 @@
 import argparse
 import os
 import sys
-
+import random
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import cv2
+from cv2 import cv2
 import numpy as np
 
-import time
+import tensorflow 
 from tensorflow.keras.layers import (Conv2D, Dense, Dropout, Flatten, MaxPooling2D)
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten
@@ -24,7 +24,7 @@ import pickle
 
 screen = curses.initscr()
 
-board_size = 9
+board_size = 4
 
 def Quit():
     curses.endwin()
@@ -40,6 +40,10 @@ def initializeCurses():
     curses.init_pair(4, curses.COLOR_WHITE,   curses.COLOR_BLACK)
     curses.init_pair(5, curses.COLOR_RED,     curses.COLOR_BLACK)
     curses.init_pair(6, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+    curses.init_pair(7, curses.COLOR_BLACK,   curses.COLOR_GREEN)
+    curses.init_pair(8, curses.COLOR_BLACK,   curses.COLOR_RED)
+    curses.init_pair(9, curses.COLOR_BLACK,   curses.COLOR_YELLOW)
+    
 
     curses.curs_set(1)
     screen.keypad(1)
@@ -57,13 +61,15 @@ class N:
         if number == 0:
             return "DELETE"
         if number == 1:
-            return ":)"
+            return ":D"
         if number == 2:
-            return ":("
-        if number == 3:
             return ":o"
-        else:
+        if number == 3:
+            return ":p"
+        if number == 4:
             return ":*"
+        else:
+            return "ERROR"
 
     # Lock number (or opposite)
     def setLock(self):
@@ -84,13 +90,23 @@ class N:
     def numAsEmoji(self):
         return self.convertToEmoji(self.getNumber())
 
+    def __str__(self):
+        return self.getNumber()
+
 
 '''  The sudoku game, which contains a board to print and the update function  '''
 class SudokuGame():
-    def __init__(self, size, init_x, init_y, horjump = 3, verjump = 1):
-        self.board = [[N(0)]*size for i in range(size)]
-        self.sudoku_size = size
+    def __init__(self, sud_list, init_x, init_y, horjump = 3, verjump = 1):
+        self.sudoku = sud_list
+        self.sudoku_size = len(sud_list)
+        self.board = [[N(0)]*self.sudoku_size for i in range(self.sudoku_size)]
 
+
+
+        for y in range(self.sudoku_size):
+            for x in range(self.sudoku_size):
+                self.board[x][y] = N(self.sudoku[x][y])
+        #self.board = self.sudoku
         self.init_x,         self.init_y      = init_x,  init_y
         self.xjump,          self.yjump       = horjump, verjump
         self.current_column, self.current_row = 0,       0
@@ -100,8 +116,139 @@ class SudokuGame():
         self.moveCursor()
 
 
+    """
+    # check sudoku
+    for num in row:
+        if num == 0
+            wrong
+        elif num not in list:
+            add num to list
+        else:
+            return "wrong"
+
+    list[0].getNumber()
+
+
+
+    list = [0]*size
+    for num in row:
+        list[num] += 1
+    if maxof(list) < 2
+        wrong
+    """
+    """
+    # check row
+    def checkRow(solved_sudoku, row):
+        row_set = set()
+        for num in solved_sudoku[row]:
+            row_set.append(num)
+        if 0 in row_set:
+            return "unfinished"
+        elif len(row_set) < len(solved_sudoku):
+            return "not valid"
+        else:
+            return "correct"
+    """
+       # check row
+    def checkRow(self, row):
+        row_set = set()
+        for num in self.board[row]:
+            row_set.add(num.getNumber())
+        if 0 in row_set:
+            return "unfinished"
+        elif len(row_set) < self.sudoku_size:
+            return "not valid"
+        else:
+            return "correct"
+    """
+    # check column
+    def checkColumn(solved_sudoku, col):
+        col_set = set()
+        for row in solved_sudoku:
+            col_set.append(solved_sudoku[col])
+        if 0 in col_set:
+            return "unfinished"
+        elif len(col_set) < len(solved_sudoku):
+            return "not valid"
+        else:
+            return "correct"
+    """
+
+        # check column
+    def checkColumn(self, col):
+        col_set = set()
+        for row in self.board:
+            col_set.add(row[col].getNumber())
+        if 0 in col_set:
+            return "unfinished"
+        elif len(col_set) < self.sudoku_size:
+            return "not valid"
+        else:
+            return "correct"
+
+
+    # check box
+    def checkBox(self, boxCol, boxRow):
+        
+        box_set = set()
+        box = self.accessBox(boxCol, boxRow)
+        
+        for num in box:
+            box_set.add(num)
+        if 0 in box_set:
+            return "unfinished"
+        elif len(box_set) < len(box):
+            return "not valid"
+        else:
+            return "correct"
+    
+    def checkSudoku(self):
+        result = "correct"
+        for row in range(self.sudoku_size):
+            checkedRow = self.checkRow(row)
+            if checkedRow == "unfinished":
+                return "unfinished"
+            elif checkedRow == "not valid":
+                result = "wrong"
+                #return "wrong"
+        
+        for col in range(self.sudoku_size):
+            checkedCol = self.checkColumn(col)
+            if checkedCol == "unfinished":
+                return "unfinished"
+            elif checkedCol == "not valid":
+                result = "wrong"
+                #return "wrong"
+        
+        for col in range(self.sudSqrt()):
+            for row in range(self.sudSqrt()):
+                checkedBox = self.checkBox(col,row)
+                if checkedBox == "unfinished":
+                    return "unfinished"
+                elif checkedBox == "not valid":
+                    result = "wrong"
+                    #return "wrong"
+
+        return result
+        #return "correct"
+    
+    
+
+
+    def accessBox(self, boxColumn, boxRow):
+        startCol = boxColumn * self.sudSqrt()
+        startRow = boxRow    * self.sudSqrt()
+        l = []
+        for i in range(self.sudSqrt()):
+            for j in range(self.sudSqrt()):
+                l.append(self.board[startCol+j][startRow+i].getNumber())
+        return l
+
+  
+
     ''' Prints the board as it currently is.''' 
     def Print(self):
+
         hor_square_bars = "  " + "-" * ((self.sudoku_size+self.sudSqrt()) * self.xjump - 1)
         ver_bar = self.printfield("|")
         extraY = 1
@@ -118,6 +265,7 @@ class SudokuGame():
 
             for x in range(self.sudoku_size):
                 # Checks when to draw bar
+            
                 if ((x+1) % self.sudSqrt() == 1) and (x+1 > self.sudSqrt()):
                     screen.addstr(ver_bar, self.bar_color)
                 # Print either the emoji or whitespaces if cell has not been filled
@@ -151,7 +299,7 @@ class SudokuGame():
         screen.nodelay(True)
         self.moveCursor()
         
-        screen.addstr((self.sudoku_size+self.sudSqrt() * self.xjump ) , 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
+        screen.addstr((self.sudoku_size+self.sudSqrt() * self.yjump + 3 ) , 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
         screen.addstr(N(arg).numAsEmoji(), curses.color_pair(5))
         self.Print()
         self.moveCursor()
@@ -176,18 +324,46 @@ class SudokuGame():
             self.current_row += 1
             if self.current_row > self.sudoku_size -1:
                 self.current_row = 0
+        elif event == 8:
+            self.board[self.current_column][self.current_row] = N(0)
         elif event == 10:
             screen.nodelay(False)
             self.board[self.current_column][self.current_row] = N(arg)
             self.Print()
+        elif event == 32:
+            screen.nodelay(False)
+            result = self.checkSudoku()
+            self.isCorrect(result)
+            event = screen.getch()
+            while True:
+                if event == 32:
+                    screen.nodelay(True)
+                    break
+                event = screen.getch()
+
+
+
+            
+        
         self.moveCursor()
             
+    def isCorrect(self, result):
+        if result == "correct":
+            #screen.addstr(self.sudoku_size+self.sudSqrt() * self.yjump + 3 , 15, "Oops, there's something wrong here", curses.color_pair(8) )
 
+            screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, "Yay, you won!", curses.color_pair(7))
+        elif result == "wrong":
+            screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10 , 15, "Oops, there's something wrong here", curses.color_pair(8) )
+        elif result == "unfinished":
+            screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10 , 15, "Unfinished", curses.color_pair(9) )
+        
+    
     # Simply returns the square root of the size
     def sudSqrt(self):
         return int(math.sqrt(self.sudoku_size))
 
     # Makes sure the input for a cell will stay somewhat in the middle. Flexible on cell-size
+
     def printfield(self, inp):
         inp = str(inp)
         left  = " " * ( + int((self.xjump- len(str(inp)))/2))
@@ -197,129 +373,104 @@ class SudokuGame():
 
 
 
-
-
-if sys.platform == 'linux':
-    from gpiozero import CPUTemperature
-
-
 class CamDetection():
         
     def __init__(self):
-        self.result = 4
+        self.result = 0
 
-        # input arg parsing
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-f', '--fullscreen',
-                            help='Display window in full screen', action='store_true')
-        parser.add_argument(
-            '-d', '--debug', help='Display debug info', action='store_true')
-        parser.add_argument(
-            '-fl', '--flip', help='Flip incoming video signal', action='store_true')
-        self.args = parser.parse_args()
+        #load our model
+        self.emojimodel = tensorflow.keras.models.load_model('emotions.h5')
+        #initialize an array tocontain frame information
+        self.emojidata = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+        #load our label dictionary
+        self.emoji_dict = {0: ":D", 1: ":O", 2:":P", 3:":*"}
 
-        # create model (convolutional nn)
-        model = Sequential()
-
-        model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(48, 48, 1)))
-        model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
-
-        model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
-
-        model.add(Flatten())
-        model.add(Dense(1024, activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(7, activation='softmax'))
-
-        model.load_weights('model.h5')
-        self.model = model
-        # prevents openCL usage and unnecessary logging messages
-        cv2.ocl.setUseOpenCL(False)
-        self.emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful",
-                        3: "Horny", 4: "Neutral", 5: "Sad", 6: "Surprised"}
+        #start webcam
         self.cap = cv2.VideoCapture(0)
-        self.counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        self.facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+
+        self.counter = {0: 0, 1: 0, 2: 0, 3: 0}
 
     def get_gpu_temp(self):
         temp = subprocess.check_output(['vcgencmd measure_temp | egrep -o \'[0-9]*\.[0-9]*\''],
                                         shell=True, universal_newlines=True)
         return str(float(temp))
 
-    def above10(self,dic:dict, lastreturn):
-        result = lastreturn
-        for i in dic:
-            if dic[i] > 10:
-                return i
-                for i in dic:
-                    dic[i] = 0
-        return result
-
 
     def thefunction(self):
-        # time for fps
-        start_time = time.time()
 
         # Find haar cascade to draw bounding box around face
         ret, frame = self.cap.read()
-        if self.args.flip:
-            frame = cv2.flip(frame, 0)
+        frame = cv2.flip(frame, 1)
         if not ret:
             return
-        facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+        faces = self.facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
         for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y-50), (x+w, y+h+10), (255, 0, 0), 2)
-            roi_gray = gray[y:y + h, x:x + w]
-            cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
-            prediction = self.model.predict(cropped_img)
-            maxindex = int(np.argmax(prediction))
-            self.counter[maxindex] += 1
-            cv2.putText(frame, self.emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        print(f'counter: {self.counter}')
+            self.emojiframe = cv2.rectangle(frame, (x-10, y-50), (x+w+10, y+h+30), (255, 0, 0), 2)
+            frame3 = frame[y-50:y + h + 10, x-10:x + w +10]
+            frame3 = cv2.resize(frame3, (224, 224))
+            image_array2 = np.asarray(frame3)
+            self.emojidata[0]=(image_array2.astype(np.float32) / 127.0) - 1
+            emoji = self.emojimodel.predict(self.emojidata)
+            #print(emoji)
+            emojiresult = np.argmax(emoji[0])
+            self.counter[emojiresult] += 1
+            cv2.putText(frame, self.emoji_dict[int(emojiresult)], (x,y), self.font, 1.7, (0, 255, 0), 2, cv2.LINE_AA)
 
-        # full screen
-        if self.args.fullscreen:
-            cv2.namedWindow("video", cv2.WND_PROP_FULLSCREEN)
-            cv2.setWindowProperty("video", cv2.WND_PROP_FULLSCREEN, 1)
 
-        # debug info
-        if self.args.debug:
-            fps = str(int(1.0 / (time.time() - start_time)))
-            cv2.putText(frame, fps + " fps", (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-            if sys.platform == 'linux':
-                cpu_temp = str(int(CPUTemperature().temperature)) + " C (CPU)"
-                cv2.putText(frame, cpu_temp, (20, 95), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-                cv2.putText(frame, get_gpu_temp() + " C (GPU)", (20, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-        cv2.imshow('video', cv2.resize(
-            frame, (800, 480), interpolation=cv2.INTER_CUBIC))
+    
+        cv2.imshow('video', cv2.resize(frame, (800, 480), interpolation=None))   # interpolation = None?
+        
         for i in self.counter:
             if self.counter[i] >= 10:
                 self.result = i
-                print(self.result)
-                print(f'emo dict: {self.emotion_dict[self.result]}')
+                #print(self.result)
+                #print(f'emo dict: {self.emoji_dict[self.result]}')
                 for i in self.counter:
                     self.counter[i] = 0
 
 
+class SudokuReader():
+    def __init__(self,filename, rand = False):
+        self.filename = filename
+        self.sudoku_list = None
+        self.rand = rand
+        self.read()
+
+    def read(self):
+        infile = open(self.filename,'rb')
+        self.sudoku_list = pickle.load(infile)
+        
+
+        infile.close()
+
+    def extract(self, index = 0):
+        
+        if self.rand:
+            index = random.randint(0,len(self.sudoku_list)-1)
+        self.sudoku = self.sudoku_list[index]
+        print(self.sudoku)
+        return self.sudoku
+
 
 initializeCurses()
 cam = CamDetection()
+sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
 
-board = SudokuGame(board_size, 2, 2)
+
+
+board = SudokuGame(sudoku, 2, 2)
+#print(board.accessBox(0,0))
+
 
 ''' The thread that deals with the sudoku game'''
 def sudPart():
     while True:
         screen.clear()
-        board.update(arg = cam.result)
+        board.update(arg = cam.result+1)
         screen.nodelay(True)
         event = screen.getch()
         if event == ord("w"): 
@@ -327,7 +478,7 @@ def sudPart():
             quit()
     
 
-''' The thread that deals with the emotion detecction'''
+''' The thread that deals with the emotion detection'''
 def camPart():
     while True:
         cam.thefunction()
@@ -336,7 +487,7 @@ def camPart():
             break
 
 
-''' Threading the soduko game and the camera together'''
+''' Threading the sudoku game and the camera together'''
 t2 = threading.Thread(target=sudPart) 
 t1 = threading.Thread(target=camPart)     
 t1.start(); t2.start()
@@ -347,9 +498,11 @@ curses.endwin()
 cam.cap.release()
 cv2.destroyAllWindows()
 
+"""
 ''' Loading the sudoku pickle file '''
 filename = 'sudoku_pickle'
 infile = open(filename,'rb')
 sudoku_list = pickle.load(infile)
 infile.close()
 #print(sudoku_list[0])
+"""
