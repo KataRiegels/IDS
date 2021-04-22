@@ -61,9 +61,25 @@ def get_gpu_temp():
                                     shell=True, universal_newlines=True)
     return str(float(temp))
 
+def above10(dic:dict):
+    for i in dic:
+        if dic[i] > 10:
+            dic[i] = 0
+            return i
+    return None
+
+
 # start the webcam feed
-cap = cv2.VideoCapture(1)
-while True:
+cap = cv2.VideoCapture(0)
+counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+
+def thefunction(counter):
+    result = above10(counter)
+    if result:
+        counter = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        print(emotion_dict[result])
+
+
     # time for fps
     start_time = time.time()
 
@@ -72,7 +88,7 @@ while True:
     if args.flip:
         frame = cv2.flip(frame, 0)
     if not ret:
-        break
+        return
     facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
@@ -82,7 +98,9 @@ while True:
         roi_gray = gray[y:y + h, x:x + w]
         cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
         prediction = model.predict(cropped_img)
+        #print(prediction)
         maxindex = int(np.argmax(prediction))
+        counter[maxindex] += 1
         cv2.putText(frame, emotion_dict[maxindex], (x+20, y-60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
     # full screen
@@ -100,8 +118,11 @@ while True:
             cv2.putText(frame, get_gpu_temp() + " C (GPU)", (20, 130), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
     cv2.imshow('video', cv2.resize(
         frame, (800, 480), interpolation=cv2.INTER_CUBIC))
+    return result
+
+while True:
+    emotion = thefunction(counter)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
 cap.release()
 cv2.destroyAllWindows()
