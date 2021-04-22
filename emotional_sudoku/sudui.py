@@ -27,6 +27,7 @@ screen = curses.initscr()
 board_size = 4
 
 def Quit():
+    quit()
     curses.endwin()
 
 
@@ -116,39 +117,6 @@ class SudokuGame():
         self.moveCursor()
 
 
-    """
-    # check sudoku
-    for num in row:
-        if num == 0
-            wrong
-        elif num not in list:
-            add num to list
-        else:
-            return "wrong"
-
-    list[0].getNumber()
-
-
-
-    list = [0]*size
-    for num in row:
-        list[num] += 1
-    if maxof(list) < 2
-        wrong
-    """
-    """
-    # check row
-    def checkRow(solved_sudoku, row):
-        row_set = set()
-        for num in solved_sudoku[row]:
-            row_set.append(num)
-        if 0 in row_set:
-            return "unfinished"
-        elif len(row_set) < len(solved_sudoku):
-            return "not valid"
-        else:
-            return "correct"
-    """
        # check row
     def checkRow(self, row):
         row_set = set()
@@ -160,19 +128,7 @@ class SudokuGame():
             return "not valid"
         else:
             return "correct"
-    """
-    # check column
-    def checkColumn(solved_sudoku, col):
-        col_set = set()
-        for row in solved_sudoku:
-            col_set.append(solved_sudoku[col])
-        if 0 in col_set:
-            return "unfinished"
-        elif len(col_set) < len(solved_sudoku):
-            return "not valid"
-        else:
-            return "correct"
-    """
+ 
 
         # check column
     def checkColumn(self, col):
@@ -210,7 +166,6 @@ class SudokuGame():
                 return "unfinished"
             elif checkedRow == "not valid":
                 result = "wrong"
-                #return "wrong"
         
         for col in range(self.sudoku_size):
             checkedCol = self.checkColumn(col)
@@ -218,7 +173,6 @@ class SudokuGame():
                 return "unfinished"
             elif checkedCol == "not valid":
                 result = "wrong"
-                #return "wrong"
         
         for col in range(self.sudSqrt()):
             for row in range(self.sudSqrt()):
@@ -227,10 +181,8 @@ class SudokuGame():
                     return "unfinished"
                 elif checkedBox == "not valid":
                     result = "wrong"
-                    #return "wrong"
 
         return result
-        #return "correct"
     
     
 
@@ -373,6 +325,10 @@ class SudokuGame():
 
 
 
+
+
+
+
 class CamDetection():
         
     def __init__(self):
@@ -456,47 +412,143 @@ class SudokuReader():
         return self.sudoku
 
 
-initializeCurses()
-cam = CamDetection()
-sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
 
 
 
-board = SudokuGame(sudoku, 2, 2)
-#print(board.accessBox(0,0))
+
+class Menu():
+    class Option():
+        def __init__(self, name, functionality):
+            self.name = name
+            self.functionality = functionality
+            self.game = None
+
+        def pickOption(self):
+            self.functionality()
+            
+    def __init__(self, init_x, init_y):
+        initializeCurses()
+        self.init_x = init_x; self.init_y = init_y
+        screen.nodelay(False)
+        newGame = self.Option("New game", self.startNewGame)
+        quitGame = self.Option("Quit", self.quitApp)
+        self.options = [newGame, quitGame]
+        self.rowNr = 0
+
+    def moveCursor(self):
+        rowNr = 0
+        counter = 0
+        #event = screen.getch()
+        while True:
+            screen.nodelay(True)
+            event = screen.getch()
+
+            counter += 1
+            screen.move(self.init_y + self.rowNr, self.init_x)
+            
+            if event == 10:
+                print(self.options[rowNr].name)
+                
+                self.options[rowNr].pickOption()
+            
+            if event == curses.KEY_DOWN:
+                print("DOWN")
+                self.rowNr += 1
+                if self.rowNr >= len(self.options):
+                    self.rowNr = 0
+
+            if event == curses.KEY_UP:
+                self.rowNr -= 1
+                if self.rowNr < 0:
+                    self.rowNr = len(self.options)
+
+            if counter >= 2000:
+                break
 
 
-''' The thread that deals with the sudoku game'''
-def sudPart():
-    while True:
-        screen.clear()
-        board.update(arg = cam.result+1)
-        screen.nodelay(True)
-        event = screen.getch()
-        if event == ord("w"): 
-            Quit()
-            quit()
-    
+    def startNewGame(self):
+        sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
+        self.game = SudokuGame(sudoku,2,2)
+        run(self.game)
 
-''' The thread that deals with the emotion detection'''
-def camPart():
-    while True:
-        cam.thefunction()
-        result = cam.result
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    def quitApp(self):
+        Quit()
+
+    def getHelp(self):
+        pass
 
 
-''' Threading the sudoku game and the camera together'''
-t2 = threading.Thread(target=sudPart) 
-t1 = threading.Thread(target=camPart)     
-t1.start(); t2.start()
-t1.join();  t2.join() 
+    def addOption(self):
+        count = 0
+        for option in self.options:
+            screen.addstr(self.init_y + count, self.init_x, option.name)
+            count += 1
+        
 
-# Make sure everything is closed
-curses.endwin()
-cam.cap.release()
-cv2.destroyAllWindows()
+    def startMenu(self):
+        self.addOption()
+        self.moveCursor()
+
+
+
+
+
+def run(board):
+    cam = CamDetection()
+    """
+    sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
+
+
+
+    board = SudokuGame(sudoku, 2, 2)
+    """
+    #print(board.accessBox(0,0))
+
+
+    ''' The thread that deals with the sudoku game'''
+    def sudPart():
+        while True:
+            screen.clear()
+            board.update(arg = cam.result+1)
+            screen.nodelay(True)
+            event = screen.getch()
+            if event == ord("w"): 
+                Quit()
+                quit()
+        
+
+    ''' The thread that deals with the emotion detection'''
+    def camPart():
+        while True:
+            cam.thefunction()
+            result = cam.result
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+
+    ''' Threading the sudoku game and the camera together'''
+    def startGame(thread1, thread2):
+        t2 = threading.Thread(target=thread1) 
+        t1 = threading.Thread(target=thread2)     
+        t1.start(); t2.start()
+        t1.join();  t2.join() 
+
+
+    startGame(sudPart, camPart)
+    curses.endwin()
+    cam.cap.release()
+    cv2.destroyAllWindows()
+
+    # Make sure everything is closed
+
+
+
+menu = Menu(5,2)
+menu.startMenu()
+
+
+#run()
+
 
 """
 ''' Loading the sudoku pickle file '''
