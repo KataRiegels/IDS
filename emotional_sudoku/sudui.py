@@ -205,14 +205,14 @@ class SudokuGame():
         extraY = 1
         
         
-        screen.addstr(self.init_y, self.init_x, hor_square_bars, self.bar_color)        # prints the upper line
+        screen.addstr(self.init_y*self.yjump, self.init_x, hor_square_bars, self.bar_color)        # prints the upper line
         # prints everything on the board as well as the vertical bars and inner horizontal lines
         for y in range(self.sudoku_size):
             # Checking whether there needs to be a horizontal line
             if ((y+1) % self.sudSqrt() == 1) and (y+1 > self.sudSqrt()):
-                screen.addstr(self.init_y+y+extraY, self.init_x, hor_square_bars, self.bar_color)
+                screen.addstr((self.init_y+y+extraY)*self.yjump, self.init_x, hor_square_bars, self.bar_color)
                 extraY += 1
-            screen.addstr(self.init_y+y+extraY, self.init_x, ver_bar, self.bar_color)   # Left-most bar
+            screen.addstr((self.init_y+y+extraY)*self.yjump, self.init_x, ver_bar, self.bar_color)   # Left-most bar
 
             for x in range(self.sudoku_size):
                 # Checks when to draw bar
@@ -229,7 +229,7 @@ class SudokuGame():
                 else:
                     screen.addstr(self.printfield(" "))
             screen.addstr(ver_bar, self.bar_color)                                       # right-most bar
-        screen.addstr(self.init_y + self.sudoku_size + extraY, self.init_x, hor_square_bars, self.bar_color) # lower line
+        screen.addstr((self.init_y + self.sudoku_size + extraY)*self.yjump, self.init_x, hor_square_bars, self.bar_color) # lower line
         
 
 
@@ -239,7 +239,7 @@ class SudokuGame():
         outer_x = current_x + math.floor(current_x/math.sqrt(self.sudoku_size))
         outer_y = current_y + math.floor(current_y/math.sqrt(self.sudoku_size))
         inner_x = self.xjump * outer_x + self.init_x + (self.xjump + 1) 
-        inner_y = self.yjump * outer_y + self.init_y + (self.yjump) 
+        inner_y = self.yjump * outer_y + self.init_y + (self.yjump + 1) 
         return [inner_x, inner_y]
 
     ''' Sets the cursor position based on current position on sudoku board    '''
@@ -254,8 +254,8 @@ class SudokuGame():
         screen.nodelay(True)
         self.moveCursor()
         
-        screen.addstr((self.sudoku_size+self.sudSqrt() * self.yjump + 3 ) , 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
-        screen.addstr(N(arg).numAsEmoji(), curses.color_pair(5))
+        screen.addstr((self.sudoku_size+self.sudSqrt() )* self.yjump + 3 , 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
+        screen.addstr(N(arg).numAsEmoji(), curses.color_pair(10))
         self.Print()
         self.moveCursor()
         event = screen.getch()
@@ -297,7 +297,6 @@ class SudokuGame():
                 event = screen.getch()
         elif 48 <= event <= 48 + 9:
             self.moveCursor()
-
             screen.nodelay(False)
             arg = event-48
             if self.cellEditable(self.current_column,self.current_row):                    
@@ -337,8 +336,7 @@ class SudokuGame():
     def sudSqrt(self):
         return int(math.sqrt(self.sudoku_size))
 
-    # Makes sure the input for a cell will stay somewhat in the middle. Flexible on cell-size
-
+    # Makes sure the input for a cell will stay somewhat in the middle. Flexible on cell-size and input-size
     def printfield(self, inp):
         inp = str(inp)
         left  = " " * ( + int((self.xjump- len(str(inp)))/2))
@@ -424,8 +422,6 @@ class CamDetection():
         for i in self.counter:
             if self.counter[i] >= 10:
                 self.result = i
-                #print(self.result)
-                #print(f'emo dict: {self.emoji_dict[self.result]}')
                 for i in self.counter:
                     self.counter[i] = 0
 
