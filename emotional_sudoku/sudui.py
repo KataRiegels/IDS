@@ -375,7 +375,7 @@ class CamDetection():
         self.result = 0
 
         #load our model
-        self.emojimodel = tensorflow.keras.models.load_model('emotions.h5')
+        self.emojimodel = tensorflow.keras.models.load_model('calamari.h5')
         #initialize an array tocontain frame information
         self.emojidata = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
         #load our label dictionary
@@ -448,8 +448,6 @@ class SudokuReader():
     def read(self):
         infile = open(self.filename,'rb')
         self.sudoku_list = pickle.load(infile)
-        
-
         infile.close()
 
     def extract(self,  index = 0):
@@ -481,13 +479,14 @@ class Menu():
         screen.nodelay(False)
         newGame = self.Option("New game", self.startNewGame)
         contGame = self.Option("Continue last game", self.loadGame)
+        helpGame = self.Option("How to play", self.getHelp)
+
         quitGame = self.Option("Quit", self.quitApp)
-        self.options = [newGame, contGame, quitGame]
+        self.options = [newGame, contGame, helpGame, quitGame]
         self.rowNr = 0
         
 
     def moveCursor(self):
-        rowNr = 0
         counter = 0
         #event = screen.getch()
         while True:
@@ -519,24 +518,8 @@ class Menu():
         sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
         self.game = SudokuGame(sudoku,2,2)
         self.goGame()
-    """
-    def startNewGame(self):
-        screen.clear()
-        #print("should print on screen")
-        #print("should have printed now")
-        screen.addstr(10, 50, "LOADING..")
-        screen.addstr(11, 50, "████████      ]50% ")
-        screen.refresh()
-        time.sleep(1)
-        screen.addstr(11, 50, "██████████████]99% ")
-        screen.refresh()
-        sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
-
-        self.game = SudokuGame(sudoku,2,2)
-        run(self.game)
-        if not self.game.solved:
-            self.game.saveGame()
-    """
+  
+ 
 
     def goGame(self):
         screen.clear()
@@ -573,6 +556,63 @@ class Menu():
                 return
 
 
+    def quitApp(self):
+        Quit()
+
+    def getHelp(self):
+        
+        screen.clear()
+        screen.addstr(5, 40, "How to play the game", curses.color_pair(10))
+        screen.addstr(8, 30, "To start a new game, go back and choose \"New game\"\n")
+        screen.addstr("To continue last game, go back and choose \"Continue last game\"\n")
+        screen.addstr("to move around the board, use arrow keys\n")
+        screen.addstr("to place emoji at cursor, press enter\n")
+        screen.addstr("to delete emoji at cursor, press backspace\n")
+        screen.addstr("to check if your solution is correct, press spacebar\n")
+        screen.addstr("press X to return to menu in game\n")
+        
+        screen.addstr(20, 40, "How to play 4x4 sudoku", curses.color_pair(10))
+        
+        screen.addstr(23, 30, "Every row, column and mini-grid must contain four different emojis.\n")
+        screen.addstr(24, 30, "Fill out the missing emojis.\n")
+
+        # to move around the board, use arrow keys
+        # to place emoji at cursor, press enter
+        # to delete emoji at cursor, press backspace
+        # to check if your solution is correct, press spacebar
+        # press X to return to menu
+
+        # How to play 4x4 sudoku
+        # Every row, column and mini-grid must contain four different emojis.
+        # fill out the missing emojis
+
+
+
+        screen.nodelay(False)
+        event = screen.getch()
+        if event == 10:
+            screen.clear()
+            self.startMenu()
+            
+        #thor picks up loki
+        #thor yells get HELP
+        #thor throws loki into bad guys
+        #its funny everytime he says
+        
+
+
+    def addOption(self):
+        count = 0
+        for option in self.options:
+            screen.addstr(self.init_y + count, self.init_x, option.name)
+            count += 1
+        
+
+    def startMenu(self):
+        self.addOption()
+        self.moveCursor()
+        print("test")
+
 
     """
     def loadGame(self):
@@ -601,32 +641,6 @@ class Menu():
                 self.startMenu()
                 return
     """
-
-
-
-    def quitApp(self):
-        Quit()
-
-    def getHelp(self):
-        #thor picks up loki
-        #thor yells get HELP
-        #thor throws loki into bad guys
-        #its funny everytime he says
-        pass
-
-
-    def addOption(self):
-        count = 0
-        for option in self.options:
-            screen.addstr(self.init_y + count, self.init_x, option.name)
-            count += 1
-        
-
-    def startMenu(self):
-        self.addOption()
-        self.moveCursor()
-        print("test")
-
 
        
 
