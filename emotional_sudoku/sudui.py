@@ -110,6 +110,8 @@ class SudokuGame():
         self.xjump,          self.yjump       = horjump, verjump
         self.current_column, self.current_row = 0,       0
         self.solved = False
+        self.relativeY = (self.sudoku_size+self.sudSqrt() )* self.yjump + self.init_y
+
         self.bar_color    = curses.color_pair(6)
         self.input_color  = curses.color_pair(3)
         self.locked_color = curses.color_pair(2) 
@@ -239,7 +241,7 @@ class SudokuGame():
         outer_x = current_x + math.floor(current_x/math.sqrt(self.sudoku_size))
         outer_y = current_y + math.floor(current_y/math.sqrt(self.sudoku_size))
         inner_x = self.xjump * outer_x + self.init_x + (self.xjump + 1) 
-        inner_y = self.yjump * outer_y + self.init_y + (self.yjump + 1) 
+        inner_y = self.yjump * outer_y + self.init_y + (self.yjump) 
         return [inner_x, inner_y]
 
     ''' Sets the cursor position based on current position on sudoku board    '''
@@ -254,7 +256,7 @@ class SudokuGame():
         screen.nodelay(True)
         self.moveCursor()
         
-        screen.addstr((self.sudoku_size+self.sudSqrt() )* self.yjump + 3 , 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
+        screen.addstr(self.relativeY + 3 , 5 , f'Press enter to insert Emoji: ', curses.color_pair(1))
         screen.addstr(N(arg).numAsEmoji(), curses.color_pair(10))
         self.Print()
         self.moveCursor()
@@ -284,7 +286,7 @@ class SudokuGame():
             if self.cellEditable(self.current_column,self.current_row):     
                 self.board[self.current_column][self.current_row] = N(0)
             else:
-                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, f'Nice try. That\'s cheating')  
+                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, f'Nice try. That\'s cheating ;-)', curses.color_pair(5))  
         elif event == 32:
             screen.nodelay(False)
             result = self.checkSudoku()
@@ -300,20 +302,24 @@ class SudokuGame():
             screen.nodelay(False)
             arg = event-48
             if self.cellEditable(self.current_column,self.current_row):                    
-                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, f'psst.. you are about to place {N(arg).numAsEmoji()}')
+                screen.addstr((self.sudoku_size + self.sudSqrt()) * self.yjump + self.init_y + 10, 15, f'psst.. you are about to place \"{N(arg).numAsEmoji()}\" here')
             else:
-                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, f'Nice try. That\'s cheating')
+                screen.addstr((self.sudoku_size + self.sudSqrt()) * self.yjump + self.init_y + 10, 15, f'Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)', curses.color_pair(5))
             self.Print()
             self.moveCursor()
+            event = screen.getch()
 
             
-        event = screen.getch()
+        
         if event == 10:
             screen.nodelay(False)
             if self.cellEditable(self.current_column,self.current_row):                
                 self.board[self.current_column][self.current_row] = N(arg)
             else:
-                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, "You cannot place an emoji here :-(")
+                screen.addstr(self.relativeY + 10, 15, "Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)", curses.color_pair(5))
+                event = screen.getch()
+                if event == 10:
+                    screen.nodelay(True)
             self.Print()   
         
         self.moveCursor()
@@ -323,13 +329,14 @@ class SudokuGame():
 
 
     def isCorrect(self, result):
+        ypos = (self.sudoku_size+self.sudSqrt()) * self.yjump + self.init_y + 14
         if result == "correct":
-            screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, "Yay, you won!", curses.color_pair(7))
+            screen.addstr(ypos, 15, "Yay, you won!", curses.color_pair(7))
             self.solved = True
         elif result == "wrong":
-            screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10 , 15, "Oops, there's something wrong here", curses.color_pair(8) )
+            screen.addstr(ypos , 15, "Whoops, there's something wrong here", curses.color_pair(8) )
         elif result == "unfinished":
-            screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10 , 15, "Unfinished", curses.color_pair(9) )
+            screen.addstr(ypos, 15, "Unfinished", curses.color_pair(9) )
         
     
     # Simply returns the square root of the size
@@ -372,7 +379,13 @@ class CamDetection():
         self.emoji_dict = {0: ":D", 1: ":O", 2:":P", 3:":*"}
 
         #start webcam
-        self.cap = cv2.VideoCapture(0)
+        for attempt in range(3):
+            try:
+                self.cap = cv2.VideoCapture(attempt)
+                break
+            except Exception as e:
+                print(e)
+
         self.facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
         self.font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -505,7 +518,7 @@ class Menu():
 
     def startNewGame(self):
         sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
-        self.game = SudokuGame(sudoku,2,2)
+        self.game = SudokuGame(sudoku,13,5)
         self.goGame()
   
  
@@ -526,8 +539,8 @@ class Menu():
         screen.refresh()
         
         run(self.game)
-        #if not self.game.solved:
-         #   self.game.saveGame()
+        if not self.game.solved:
+            self.game.saveGame()
         #gogo()
         #screen.clear()
         #self.startMenu()
