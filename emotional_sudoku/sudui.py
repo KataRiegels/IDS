@@ -487,6 +487,7 @@ class Menu():
 
     def startMenu(self):
         self.addOption()
+        print("after added options")
         self.moveCursor()
 
 
