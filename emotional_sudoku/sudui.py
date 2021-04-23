@@ -59,7 +59,6 @@ class N:
     '''Object number'''		
     def __init__(self, suit):
         self.suit = suit
-        self.state = 0
 
     # Converts the numbers into matching emojis
     def convertToEmoji(self,number):
@@ -76,17 +75,6 @@ class N:
         else:
             return "ERROR"
 
-    # Lock number (or opposite)
-    def setLock(self):
-        if self.state == 0:
-            self.state = 1
-        else:
-            self.state = 0	
-
-    # Locked or not
-    def getState(self):
-        return self.state
-        
     # Return the actual int
     def getNumber(self):
         return self.suit
@@ -500,7 +488,7 @@ class Menu():
 
             counter += 1
             screen.move(self.init_y + self.rowNr, self.init_x)
-            if event == ord("w"): 
+            if event == ord("r"): 
                 Quit()
                 quit()
             elif event == 10:
@@ -545,7 +533,7 @@ class Menu():
         #if not self.game.solved:
          #   self.game.saveGame()
         #gogo()
-        screen.clear()
+        #screen.clear()
         #self.startMenu()
     
 
@@ -634,9 +622,9 @@ def run(board):
                 break
             screen.nodelay(True)
             event = screen.getch()
-            if event == ord("w"): 
+            if event == ord("e"):
                 Quit()
-                quit()
+                #quit()
         
 
     ''' The thread that deals with the emotion detection'''
@@ -667,12 +655,11 @@ def run(board):
 def gogo():
     initializeCurses()
     menu = Menu(5,2)
-    #menu.startMenu()
     cv2.destroyAllWindows()
     curses.endwin()
     quit()
-    if not menu.STOP:
-        gogo()
+    #if not menu.STOP:
+        #gogo()
 
 gogo()
 
