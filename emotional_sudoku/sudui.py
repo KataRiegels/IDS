@@ -98,23 +98,27 @@ class N:
 
 '''  The sudoku game, which contains a board to print and the update function  '''
 class SudokuGame():
-    def __init__(self, sud_list, init_x, init_y, horjump = 3, verjump = 1):
+    def __init__(self, sud_list, init_x, init_y, horjump = 3, verjump = 1, original_sud = None):
         self.sudoku = sud_list
         self.sudoku_size = len(sud_list)
-        self.board = [[N(0)]*self.sudoku_size for i in range(self.sudoku_size)]
-        self.boardCopy = [[N(0)]*self.sudoku_size for i in range(self.sudoku_size)]
 
+        self.board = [[N(0)]*self.sudoku_size for i in range(self.sudoku_size)]
+        if original_sud == None:
+            self.boardCopy = [[0]*self.sudoku_size for i in range(self.sudoku_size)]
+        else:
+            self.boardCopy = original_sud
 
 
         for y in range(self.sudoku_size):
             for x in range(self.sudoku_size):
                 self.board[x][y] = N(self.sudoku[x][y])
-                self.boardCopy[x][y] = N(self.sudoku[x][y])
+                if original_sud == None:
+                    self.boardCopy[x][y] = self.sudoku[x][y]
         #self.board = self.sudoku
         self.init_x,         self.init_y      = init_x,  init_y
         self.xjump,          self.yjump       = horjump, verjump
         self.current_column, self.current_row = 0,       0
-        
+        self.solved = False
         self.bar_color    = curses.color_pair(6)
         self.input_color  = curses.color_pair(3)
         self.locked_color = curses.color_pair(2) 
@@ -324,14 +328,13 @@ class SudokuGame():
         self.moveCursor()
 
     def cellEditable(self, col, row):
-        return self.boardCopy[col][row].getNumber() == 0
+        return self.boardCopy[col][row] == 0
 
 
     def isCorrect(self, result):
         if result == "correct":
-            #screen.addstr(self.sudoku_size+self.sudSqrt() * self.yjump + 3 , 15, "Oops, there's something wrong here", curses.color_pair(8) )
-
             screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, "Yay, you won!", curses.color_pair(7))
+            self.solved = True
         elif result == "wrong":
             screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10 , 15, "Oops, there's something wrong here", curses.color_pair(8) )
         elif result == "unfinished":
@@ -350,10 +353,19 @@ class SudokuGame():
         right = " " * (self.xjump - len(left) - len(str(inp)))
         return left + inp + right
 
+    def saveGame(self):
+        # pickling the sudokus
+        filename = 'continue_pickle'
+        outfile = open(filename,'wb')
+        self.convertToInts()
+        save = [self.board, self.boardCopy]
+        pickle.dump(save,outfile)
+        outfile.close()
 
-
-
-
+    def convertToInts(self):
+        for y in range(self.sudoku_size):
+            for x in range(self.sudoku_size):
+                self.board[x][y] = self.board[x][y].getNumber()
 
 
 
@@ -440,7 +452,7 @@ class SudokuReader():
 
         infile.close()
 
-    def extract(self, index = 0):
+    def extract(self,  index = 0):
         
         if self.rand:
             index = random.randint(0,len(self.sudoku_list)-1)
@@ -468,9 +480,11 @@ class Menu():
         self.init_x = init_x; self.init_y = init_y
         screen.nodelay(False)
         newGame = self.Option("New game", self.startNewGame)
+        contGame = self.Option("Continue last game", self.loadGame)
         quitGame = self.Option("Quit", self.quitApp)
-        self.options = [newGame, quitGame]
+        self.options = [newGame, contGame, quitGame]
         self.rowNr = 0
+        
 
     def moveCursor(self):
         rowNr = 0
@@ -486,13 +500,12 @@ class Menu():
                 Quit()
                 quit()
             elif event == 10:
-                print(self.options[rowNr].name)
-                
-                self.options[rowNr].pickOption()
+                print(f'row nr: {self.rowNr}')
+                print(self.options[self.rowNr].name)
+                self.options[self.rowNr].pickOption()
                 screen.nodelay(False)
             
             if event == curses.KEY_DOWN:
-                print("DOWN")
                 self.rowNr += 1
                 if self.rowNr >= len(self.options):
                     self.rowNr = 0
@@ -500,13 +513,38 @@ class Menu():
             if event == curses.KEY_UP:
                 self.rowNr -= 1
                 if self.rowNr < 0:
-                    self.rowNr = len(self.options)
+                    self.rowNr = len(self.options) 
 
 
     def startNewGame(self):
         sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
+
         self.game = SudokuGame(sudoku,2,2)
         run(self.game)
+        if not self.game.solved:
+            self.game.saveGame()
+
+    def loadGame(self):
+        try:
+            continuedSudoku = SudokuReader('continue_pickle', rand = False).extract()
+            originalSudoku = SudokuReader('continue_pickle', rand = False).extract(index = 1)
+            os.remove("continue_pickle")
+            self.game = SudokuGame(continuedSudoku,2,2, original_sud = originalSudoku)
+            run(self.game)
+            if not self.game.solved:
+                self.game.saveGame()
+        except Exception:
+            screen.clear()
+            screen.addstr(10, 60, "There is no sudoku to continue")
+            screen.nodelay(False)
+            event = screen.getch()
+            if event == 10:
+                screen.clear()
+                self.startMenu()
+                return
+
+
+
 
     def quitApp(self):
         Quit()
@@ -532,6 +570,7 @@ class Menu():
         print("test")
 
 
+       
 
 
 
