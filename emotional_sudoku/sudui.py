@@ -515,6 +515,15 @@ class Menu():
                     self.rowNr = len(self.options) 
 
     def startNewGame(self):
+        screen.clear()
+        #print("should print on screen")
+        #print("should have printed now")
+        screen.addstr(10, 50, "LOADING..")
+        screen.addstr(11, 50, "████████      ]50% ")
+        screen.refresh()
+        time.sleep(1)
+        screen.addstr(11, 50, "██████████████]99% ")
+        screen.refresh()
         sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
         self.game = SudokuGame(sudoku,2,2)
         self.goGame()
@@ -542,6 +551,13 @@ class Menu():
 
     def loadGame(self):
         try:
+            screen.clear()
+            screen.addstr(10, 50, "LOADING..")
+            screen.addstr(11, 50, "████████      ]50% ")
+            screen.refresh()
+            time.sleep(1)
+            screen.addstr(11, 50, "██████████████]99% ")
+            screen.refresh()
             continuedSudoku = SudokuReader('continue_pickle', rand = False).extract()
             originalSudoku = SudokuReader('continue_pickle', rand = False).extract(index = 1)
             os.remove("continue_pickle")
