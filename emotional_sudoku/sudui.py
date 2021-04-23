@@ -44,6 +44,7 @@ def initializeCurses():
     curses.init_pair(7, curses.COLOR_BLACK,   curses.COLOR_GREEN)
     curses.init_pair(8, curses.COLOR_BLACK,   curses.COLOR_RED)
     curses.init_pair(9, curses.COLOR_BLACK,   curses.COLOR_YELLOW)
+    curses.init_pair(10, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     
 
     curses.curs_set(1)
@@ -101,19 +102,22 @@ class SudokuGame():
         self.sudoku = sud_list
         self.sudoku_size = len(sud_list)
         self.board = [[N(0)]*self.sudoku_size for i in range(self.sudoku_size)]
+        self.boardCopy = [[N(0)]*self.sudoku_size for i in range(self.sudoku_size)]
 
 
 
         for y in range(self.sudoku_size):
             for x in range(self.sudoku_size):
                 self.board[x][y] = N(self.sudoku[x][y])
+                self.boardCopy[x][y] = N(self.sudoku[x][y])
         #self.board = self.sudoku
         self.init_x,         self.init_y      = init_x,  init_y
         self.xjump,          self.yjump       = horjump, verjump
         self.current_column, self.current_row = 0,       0
         
-        self.bar_color  = curses.color_pair(6)
-        self.input_color = curses.color_pair(3)
+        self.bar_color    = curses.color_pair(6)
+        self.input_color  = curses.color_pair(3)
+        self.locked_color = curses.color_pair(2) 
         self.moveCursor()
 
 
@@ -222,7 +226,11 @@ class SudokuGame():
                     screen.addstr(ver_bar, self.bar_color)
                 # Print either the emoji or whitespaces if cell has not been filled
                 if self.board[x][y].getNumber() != 0:
-                    screen.addstr(self.printfield(self.board[x][y].numAsEmoji()), self.input_color)
+                    if self.cellEditable(x,y):
+                        color = self.input_color
+                    else:
+                        color = self.locked_color
+                    screen.addstr(self.printfield(self.board[x][y].numAsEmoji()), color)
                 else:
                     screen.addstr(self.printfield(" "))
             screen.addstr(ver_bar, self.bar_color)                                       # right-most bar
@@ -277,11 +285,10 @@ class SudokuGame():
             if self.current_row > self.sudoku_size -1:
                 self.current_row = 0
         elif event == 8:
-            self.board[self.current_column][self.current_row] = N(0)
-        elif event == 10:
-            screen.nodelay(False)
-            self.board[self.current_column][self.current_row] = N(arg)
-            self.Print()
+            if self.cellEditable(self.current_column,self.current_row):     
+                self.board[self.current_column][self.current_row] = N(0)
+            else:
+                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, f'Nice try. That\'s cheating')  
         elif event == 32:
             screen.nodelay(False)
             result = self.checkSudoku()
@@ -292,13 +299,34 @@ class SudokuGame():
                     screen.nodelay(True)
                     break
                 event = screen.getch()
+        elif 48 <= event <= 48 + 9:
+            self.moveCursor()
 
-
+            screen.nodelay(False)
+            arg = event-48
+            if self.cellEditable(self.current_column,self.current_row):                    
+                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, f'psst.. you are about to place {N(arg).numAsEmoji()}')
+            else:
+                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, f'Nice try. That\'s cheating')
+            self.Print()
+            self.moveCursor()
 
             
+        event = screen.getch()
+        if event == 10:
+            screen.nodelay(False)
+            if self.cellEditable(self.current_column,self.current_row):                
+                self.board[self.current_column][self.current_row] = N(arg)
+            else:
+                screen.addstr((self.sudoku_size+self.sudSqrt()) * self.yjump + 10, 15, "You cannot place an emoji here :-(")
+            self.Print()   
         
         self.moveCursor()
-            
+
+    def cellEditable(self, col, row):
+        return self.boardCopy[col][row].getNumber() == 0
+
+
     def isCorrect(self, result):
         if result == "correct":
             #screen.addstr(self.sudoku_size+self.sudSqrt() * self.yjump + 3 , 15, "Oops, there's something wrong here", curses.color_pair(8) )
@@ -364,20 +392,29 @@ class CamDetection():
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = self.facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
-        for (x, y, w, h) in faces:
-            self.emojiframe = cv2.rectangle(frame, (x-10, y-50), (x+w+10, y+h+30), (255, 0, 0), 2)
-            frame3 = frame[y-50:y + h + 10, x-10:x + w +10]
-            frame3 = cv2.resize(frame3, (224, 224))
-            image_array2 = np.asarray(frame3)
-            self.emojidata[0]=(image_array2.astype(np.float32) / 127.0) - 1
-            emoji = self.emojimodel.predict(self.emojidata)
-            #print(emoji)
-            emojiresult = np.argmax(emoji[0])
-            self.counter[emojiresult] += 1
-            cv2.putText(frame, self.emoji_dict[int(emojiresult)], (x,y), self.font, 1.7, (0, 255, 0), 2, cv2.LINE_AA)
+        try:
+            for (x, y, w, h) in faces:
+                self.emojiframe = cv2.rectangle(frame, (x-10, y-50), (x+w+10, y+h+30), (255, 0, 0), 2)
+                frame3 = frame[y-50:y + h + 10, x-10:x + w +10]
+                frame3 = cv2.resize(frame3, (224, 224))
+                image_array2 = np.asarray(frame3)
+                self.emojidata[0]=(image_array2.astype(np.float32) / 127.0) - 1
+                emoji = self.emojimodel.predict(self.emojidata)
+                #print(emoji)
+                emojiresult = np.argmax(emoji[0])
+                self.counter[emojiresult] += 1
+                cv2.putText(frame, self.emoji_dict[int(emojiresult)], (x,y), self.font, 1.7, (0, 255, 0), 2, cv2.LINE_AA)
+        except Exception as e:
+            print(str(e))
+        '''
+        try:
+            path=os.path.join(mypath,n)
+            img=cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            img=cv2.resize(img, (img_rows,img_cols))
 
-
-    
+        except Exception as e:
+            print(str(e))
+        '''
         cv2.imshow('video', cv2.resize(frame, (800, 480), interpolation=None))   # interpolation = None?
         
         for i in self.counter:
@@ -445,11 +482,14 @@ class Menu():
 
             counter += 1
             screen.move(self.init_y + self.rowNr, self.init_x)
-            
-            if event == 10:
+            if event == ord("w"): 
+                Quit()
+                quit()
+            elif event == 10:
                 print(self.options[rowNr].name)
                 
                 self.options[rowNr].pickOption()
+                screen.nodelay(False)
             
             if event == curses.KEY_DOWN:
                 print("DOWN")
@@ -462,9 +502,6 @@ class Menu():
                 if self.rowNr < 0:
                     self.rowNr = len(self.options)
 
-            if counter >= 2000:
-                break
-
 
     def startNewGame(self):
         sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
@@ -475,6 +512,10 @@ class Menu():
         Quit()
 
     def getHelp(self):
+        #thor picks up loki
+        #thor yells get HELP
+        #thor throws loki into bad guys
+        #its funny everytime he says
         pass
 
 
@@ -488,6 +529,7 @@ class Menu():
     def startMenu(self):
         self.addOption()
         self.moveCursor()
+        print("test")
 
 
 
