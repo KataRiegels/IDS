@@ -27,8 +27,11 @@ screen = curses.initscr()
 board_size = 4
 
 def Quit():
-    quit()
+    screen.clear()
+    screen.addstr(10,30, "Quitting..")
+    screen.refresh()
     curses.endwin()
+    quit()
 
 
 def initializeCurses():
@@ -271,20 +274,21 @@ class SudokuGame():
         if event == ord("w"): 
             Quit()
             quit()
-            return
-        elif event == curses.KEY_LEFT:
+        elif event == 27: 
+            return False
+        elif event ==  (curses.KEY_LEFT or 75 or 97):
             self.current_column -= 1
             if self.current_column < 0:
                 self.current_column = self.sudoku_size -1
-        elif event == curses.KEY_RIGHT:
+        elif event == (curses.KEY_RIGHT or 77 or 100):
             self.current_column += 1
             if self.current_column > self.sudoku_size -1:
                 self.current_column = 0
-        elif event == curses.KEY_UP:
+        elif event == (curses.KEY_UP or 72 or 120):
             self.current_row -= 1
             if self.current_row < 0:
                 self.current_row = self.sudoku_size -1
-        elif event == curses.KEY_DOWN:
+        elif event == (curses.KEY_DOWN or 80 or 115):
             self.current_row += 1
             if self.current_row > self.sudoku_size -1:
                 self.current_row = 0
@@ -474,7 +478,6 @@ class Menu():
             self.functionality()
             
     def __init__(self, init_x, init_y):
-        initializeCurses()
         self.init_x = init_x; self.init_y = init_y
         screen.nodelay(False)
         newGame = self.Option("New game", self.startNewGame)
@@ -484,6 +487,8 @@ class Menu():
         quitGame = self.Option("Quit", self.quitApp)
         self.options = [newGame, contGame, helpGame, quitGame]
         self.rowNr = 0
+        self.STOP = False
+        self.startMenu()
         
 
     def moveCursor(self):
@@ -502,7 +507,7 @@ class Menu():
                 print(f'row nr: {self.rowNr}')
                 print(self.options[self.rowNr].name)
                 self.options[self.rowNr].pickOption()
-                screen.nodelay(False)
+                #screen.nodelay(False)
             
             if event == curses.KEY_DOWN:
                 self.rowNr += 1
@@ -529,13 +534,19 @@ class Menu():
         time.sleep(1)
         screen.addstr(11, 50, "██████████████]99% ")
         screen.refresh()
-        #continuedSudoku = SudokuReader('continue_pickle', rand = False).extract()
-        #originalSudoku = SudokuReader('continue_pickle', rand = False).extract(index = 1)
-        #os.remove("continue_pickle")
-        #self.game = SudokuGame(continuedSudoku,2,2, original_sud = originalSudoku)
+        time.sleep(0.5)
+        screen.addstr(11, 50, "█████████████ ]98% ")
+        screen.refresh()
+        time.sleep(0.5)
+        screen.addstr(11, 50, "██████████████]99% ")
+        screen.refresh()
+        
         run(self.game)
-        if not self.game.solved:
-            self.game.saveGame()
+        #if not self.game.solved:
+         #   self.game.saveGame()
+        #gogo()
+        screen.clear()
+        #self.startMenu()
     
 
     def loadGame(self):
@@ -557,6 +568,7 @@ class Menu():
 
 
     def quitApp(self):
+        self.STOP = True
         Quit()
 
     def getHelp(self):
@@ -576,29 +588,14 @@ class Menu():
         screen.addstr(23, 30, "Every row, column and mini-grid must contain four different emojis.\n")
         screen.addstr(24, 30, "Fill out the missing emojis.\n")
 
-        # to move around the board, use arrow keys
-        # to place emoji at cursor, press enter
-        # to delete emoji at cursor, press backspace
-        # to check if your solution is correct, press spacebar
-        # press X to return to menu
-
-        # How to play 4x4 sudoku
-        # Every row, column and mini-grid must contain four different emojis.
-        # fill out the missing emojis
-
-
-
+   
         screen.nodelay(False)
         event = screen.getch()
         if event == 10:
             screen.clear()
             self.startMenu()
             
-        #thor picks up loki
-        #thor yells get HELP
-        #thor throws loki into bad guys
-        #its funny everytime he says
-        
+    
 
 
     def addOption(self):
@@ -611,36 +608,6 @@ class Menu():
     def startMenu(self):
         self.addOption()
         self.moveCursor()
-        print("test")
-
-
-    """
-    def loadGame(self):
-        try:
-            screen.clear()
-            screen.addstr(10, 50, "LOADING..")
-            screen.addstr(11, 50, "████████      ]50% ")
-            screen.refresh()
-            time.sleep(1)
-            screen.addstr(11, 50, "██████████████]99% ")
-            screen.refresh()
-            continuedSudoku = SudokuReader('continue_pickle', rand = False).extract()
-            originalSudoku = SudokuReader('continue_pickle', rand = False).extract(index = 1)
-            os.remove("continue_pickle")
-            self.game = SudokuGame(continuedSudoku,2,2, original_sud = originalSudoku)
-            run(self.game)
-            if not self.game.solved:
-                self.game.saveGame()
-        except Exception:
-            screen.clear()
-            screen.addstr(10, 60, "There is no sudoku to continue")
-            screen.nodelay(False)
-            event = screen.getch()
-            if event == 10:
-                screen.clear()
-                self.startMenu()
-                return
-    """
 
        
 
@@ -662,7 +629,9 @@ def run(board):
     def sudPart():
         while True:
             screen.clear()
-            board.update(arg = cam.result+1)
+            doUpdate = board.update(arg = cam.result+1)
+            if doUpdate == False:
+                break
             screen.nodelay(True)
             event = screen.getch()
             if event == ord("w"): 
@@ -688,17 +657,24 @@ def run(board):
 
 
     startGame(sudPart, camPart)
-    curses.endwin()
     cam.cap.release()
-    cv2.destroyAllWindows()
+    cv2.destroyWindow('video')
+    #t1.stop();  t2.stop() 
 
     # Make sure everything is closed
 
 
+def gogo():
+    initializeCurses()
+    menu = Menu(5,2)
+    #menu.startMenu()
+    cv2.destroyAllWindows()
+    curses.endwin()
+    quit()
+    if not menu.STOP:
+        gogo()
 
-menu = Menu(5,2)
-menu.startMenu()
-
+gogo()
 
 #run()
 
