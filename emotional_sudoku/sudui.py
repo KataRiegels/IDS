@@ -515,7 +515,11 @@ class Menu():
                 if self.rowNr < 0:
                     self.rowNr = len(self.options) 
 
-
+    def startNewGame(self):
+        sudoku = SudokuReader('sudoku_pickle', rand = True).extract()
+        self.game = SudokuGame(sudoku,2,2)
+        self.goGame()
+    """
     def startNewGame(self):
         screen.clear()
         #print("should print on screen")
@@ -532,7 +536,45 @@ class Menu():
         run(self.game)
         if not self.game.solved:
             self.game.saveGame()
+    """
 
+    def goGame(self):
+        screen.clear()
+        screen.addstr(10, 50, "LOADING..")
+        screen.addstr(11, 50, "████████      ]50% ")
+        screen.refresh()
+        time.sleep(1)
+        screen.addstr(11, 50, "██████████████]99% ")
+        screen.refresh()
+        #continuedSudoku = SudokuReader('continue_pickle', rand = False).extract()
+        #originalSudoku = SudokuReader('continue_pickle', rand = False).extract(index = 1)
+        #os.remove("continue_pickle")
+        #self.game = SudokuGame(continuedSudoku,2,2, original_sud = originalSudoku)
+        run(self.game)
+        if not self.game.solved:
+            self.game.saveGame()
+    
+
+    def loadGame(self):
+        try:
+            continuedSudoku = SudokuReader('continue_pickle', rand = False).extract()
+            originalSudoku = SudokuReader('continue_pickle', rand = False).extract(index = 1)
+            os.remove("continue_pickle")
+            self.game = SudokuGame(continuedSudoku,2,2, original_sud = originalSudoku)
+            self.goGame()
+        except Exception:
+            screen.clear()
+            screen.addstr(10, 60, "There is no sudoku to continue")
+            screen.nodelay(False)
+            event = screen.getch()
+            if event == 10:
+                screen.clear()
+                self.startMenu()
+                return
+
+
+
+    """
     def loadGame(self):
         try:
             screen.clear()
@@ -558,7 +600,7 @@ class Menu():
                 screen.clear()
                 self.startMenu()
                 return
-
+    """
 
 
 
