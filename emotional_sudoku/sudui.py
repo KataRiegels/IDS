@@ -20,8 +20,8 @@ import pickle
 
 screen = curses.initscr()
 
-board_size = 4
 
+''' Quitting the TUI '''
 def Quit():
     screen.clear()
     screen.addstr(10,30, "Quitting..")
@@ -30,9 +30,8 @@ def Quit():
     curses.endwin()
     quit()
 
-
+''' Initializes curses, which is necessary. '''
 def initializeCurses():
-    screen = curses.initscr()
     curses.noecho()
     curses.start_color()
     curses.init_pair(1, curses.COLOR_BLUE,    curses.COLOR_BLACK)
@@ -45,7 +44,17 @@ def initializeCurses():
     curses.init_pair(8, curses.COLOR_BLACK,   curses.COLOR_RED)
     curses.init_pair(9, curses.COLOR_BLACK,   curses.COLOR_YELLOW)
     curses.init_pair(10, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(11, curses.COLOR_WHITE,  curses.COLOR_MAGENTA)    
+    curses.init_pair(11, curses.COLOR_WHITE,  curses.COLOR_MAGENTA)  
+    curses.init_pair(12, curses.COLOR_WHITE,   curses.COLOR_BLACK)
+    curses.init_pair(13, curses.COLOR_WHITE,   curses.COLOR_BLACK)
+
+    #if False:
+
+    if curses.can_change_color():
+        curses.init_pair(12, 241,  curses.COLOR_BLACK) 
+
+
+
     colorpairs = {"blue-black"    : curses.color_pair(1),
                   "green-black"   : curses.color_pair(2),
                   "cyan-black"    : curses.color_pair(3),
@@ -56,7 +65,8 @@ def initializeCurses():
                   "black-red"     : curses.color_pair(8),
                   "black-yellow"  : curses.color_pair(9),
                   "yellow-black"  : curses.color_pair(10),
-                  "white-magenta" : curses.color_pair(11)}
+                  "white-magenta" : curses.color_pair(11),
+                  "grey-black"    : curses.color_pair(12)}
     curses.curs_set(1)
     screen.keypad(1)
     curses.col = colorpairs
@@ -207,6 +217,8 @@ class SudokuGame():
     # Prints the board as it currently is. 
     def printBoard(self):
         bar_color    = curses.col["magenta-black"]
+        #bar_color    = curses.color_pair(12)
+
         input_color  = curses.col["cyan-black"]
         locked_color = curses.col["green-black"] 
         
@@ -322,8 +334,10 @@ class SudokuGame():
             screen.nodelay(False)
             arg = event-48
             if self.cellEditable(self.current_column,self.current_row):   
-                self.messagePrint('psst.. you are about to place a ', 'white-black' )
-                screen.addstr( f"{N(arg).numAsEmoji()}", curses.col["yellow-black"])                 
+                self.messagePrint('psst.. press Enter to insert  ', 'grey-black' )
+                screen.addstr( f"{N(arg).numAsEmoji()}", curses.col["yellow-black"])     
+                screen.addstr( " instead", curses.col["grey-black"])                 
+                            
             else:
                 self.messagePrint(f'Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)', 'red-black')
             self.printBoard()
@@ -468,7 +482,7 @@ class CamDetection():
                 for i in self.counter:
                     self.counter[i] = 0
 
-
+''' Small class that just reads and stores a sudoku read from a file '''
 class SudokuReader():
     def __init__(self,filename, rand = False):
         self.filename = filename
@@ -480,6 +494,7 @@ class SudokuReader():
         self.sudoku_list = pickle.load(infile)
         infile.close()
 
+    # extracts a sudoku. Takes a random one if rand arg is given as True (for starting new game)
     def extract(self,  index = 0):
         if self.rand:
             index = random.randint(0,len(self.sudoku_list)-1)
@@ -633,7 +648,7 @@ class Menu():
             screen.addstr(self.init_y + count, self.init_x, option.name, curses.col["cyan-black"])
             count += 1
         
-
+    # adding options and running the menu
     def startMenu(self):
         self.addOptions()
         self.runMenu()
@@ -645,7 +660,7 @@ class Menu():
 def run(board):
     cam = CamDetection()
 
-    ''' The thread that deals with the sudoku game'''
+    #The thread that deals with the sudoku game
     def sudPart():
         while True:
             screen.clear()
@@ -660,7 +675,7 @@ def run(board):
                 
         
 
-    ''' The thread that deals with the emotion detection'''
+    #The thread that deals with the emotion detection
     def camPart():
         while True:
             cam.thefunction()
@@ -669,7 +684,7 @@ def run(board):
                 break
 
 
-    ''' Threading the sudoku game and the camera together'''
+    #Threading the sudoku game and the camera together
     def startGame(thread1, thread2):
         t2 = threading.Thread(target=thread1) 
         t1 = threading.Thread(target=thread2)     
