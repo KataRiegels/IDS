@@ -389,7 +389,11 @@ class CamDetection():
         
     def __init__(self):
         self.result = 0
-
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-c', '--cam',
+                    help='Choose which camera to use', dest = "camNr", default = 0)
+        
+        args = parser.parse_args()
         #load model for
         self.emojimodel = tensorflow.keras.models.load_model('wasabi.h5')
         #initialize an array tocontain frame information
@@ -397,14 +401,17 @@ class CamDetection():
         #load our label dictionary
         self.emoji_dict = {0: ":D", 1: ":O", 2:":*", 3:":("}
 
+
+        self.cap = cv2.VideoCapture(args.camNr)
         #start webcam
+        """
         for attempt in range(3):
             try:
                 self.cap = cv2.VideoCapture(attempt)
                 break
             except Exception as e:
                 print(e)
-
+        """
         self.facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
         self.font = cv2.FONT_HERSHEY_SIMPLEX
 
