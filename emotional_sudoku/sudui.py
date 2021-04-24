@@ -395,7 +395,7 @@ class CamDetection():
         self.result = 0
 
         #load model for
-        self.emojimodel = tensorflow.keras.models.load_model('jarvis.h5')
+        self.emojimodel = tensorflow.keras.models.load_model('wasabi.h5')
         #initialize an array tocontain frame information
         self.emojidata = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
         #load our label dictionary
@@ -443,7 +443,7 @@ class CamDetection():
                 self.counter[emojiresult] += 1
                 cv2.putText(frame, self.emoji_dict[int(emojiresult)], (x,y), self.font, 1.7, (0, 255, 0), 2, cv2.LINE_AA)
         except Exception as e:
-            print(str(e))
+            print(f'face resize error: {str(e)}')
         '''
         try:
             path=os.path.join(mypath,n)
@@ -453,8 +453,12 @@ class CamDetection():
         except Exception as e:
             print(str(e))
         '''
-        cv2.imshow('video', cv2.resize(frame, (800, 480), interpolation=None))   # interpolation = None?
-        
+        try:
+            cv2.imshow('video', cv2.resize(frame, (800, 480), interpolation=None))   # interpolation = None?
+        except Exception as e:
+            print(f'face resize error 2: {str(e)}')
+
+
         for i in self.counter:
             if self.counter[i] >= 10:
                 self.result = i
