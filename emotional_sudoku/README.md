@@ -1,6 +1,6 @@
 # Emotional Sudoku
 
-Emotional Sudoku is a game where you can play 4x4 sudoku using emotion detection from yor webcam. The detected emotions are converted to emojis that are used to fill out the sudoku grid.
+Emotional Sudoku is a game where you can play 4x4 sudoku using emotion detection from your webcam. The detected emotions are converted to emojis that are used to fill out the sudoku grid.
 
 ## Requirements
 
@@ -20,8 +20,10 @@ python sudui.py
 
 Running the program for specific webcam:
 
+(substitute camNo with the number of your preferred camera)
+
 ```bash
-python sudui.py -c 1
+python sudui.py -c camNo
 ```
 
 ## Authors
