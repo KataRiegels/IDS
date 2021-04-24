@@ -227,7 +227,7 @@ class SudokuGame():
 
             for x in range(self.sudoku_size):
                 if ((x+1) % self.sudSqrt() == 1) and (x+1 > self.sudSqrt()):
-                    screen.addstr(ver_bar, self.bar_color)
+                    screen.addstr(ver_bar, bar_color)
                 # Print either the emoji or whitespaces if cell has not been filled
                 if self.board[x][y].getNumber() != 0:
                     if self.cellEditable(x,y):
@@ -595,8 +595,10 @@ class Menu():
         screen.clear()
         instructions = ["To start a new game, go back and choose \"New game\"",
                     "To continue last game, go back and choose \"Continue last game\"",
+                    "To choose which emoji to display, mimic the corresponding emotion towards your webcam", 
+                    "   and wait for the wanted emoji to be displayed below the board",
+                    "To place displayed emoji at cursor, press enter",
                     "To move around the board, use arrow keys",
-                    "To place emoji at cursor, press enter",
                     "To delete emoji at cursor, press backspac",
                     "To check if your solution is correct, press spacebar",
                     "To quit the game or camera window, press \"q\" in the focused window"]
