@@ -61,18 +61,16 @@ def initializeCurses():
                   "black-yellow"  : curses.color_pair(9),
                   "yellow-black"  : curses.color_pair(10),
                   "white-magenta" : curses.color_pair(11)}
-
     curses.curs_set(1)
     screen.keypad(1)
     curses.col = colorpairs
 
-
+'''  Class that represents a number/emoji entity  '''
 class N:
-    '''Object number'''		
     def __init__(self, suit):
         self.suit = suit
 
-    # Converts the numbers into matching emojis
+    # Converts the numbers into corresponding emojis
     def convertToEmoji(self,number):
         if number == 0:
             return "DELETE"
@@ -99,38 +97,38 @@ class N:
         return self.getNumber()
 
 
-'''  The sudoku game, which contains a board to print and the update function  '''
+'''  The sudoku game, which contains basically everything related to the sudoku game '''
 class SudokuGame():
     def __init__(self, sud_list, init_x, init_y, horjump = 3, verjump = 1, original_sud = None, nameloc = (0,0)):
         self.sudoku = sud_list
         self.sudoku_size = len(sud_list)
-        self.nameloc = nameloc
+        self.nameloc = nameloc # location to display "SUDOKU"
+
+        # Making sure there is a a filled board, and copy of it for checking locked entries
         self.board = [[N(0)]*self.sudoku_size for i in range(self.sudoku_size)]
         if original_sud == None:
             self.boardCopy = [[0]*self.sudoku_size for i in range(self.sudoku_size)]
-        else:
+        else: # If player continues previous game, we need to check the original's locked entries
             self.boardCopy = original_sud
-
-
+        
+        # Filling the sudoku with N(entry) and copy it (with ints) if new game was chosen
         for y in range(self.sudoku_size):
             for x in range(self.sudoku_size):
                 self.board[x][y] = N(self.sudoku[x][y])
                 if original_sud == None:
                     self.boardCopy[x][y] = self.sudoku[x][y]
-        #self.board = self.sudoku
-        self.init_x,         self.init_y      = init_x,  init_y
-        self.xjump,          self.yjump       = horjump, verjump
+
+        self.init_x,         self.init_y      = init_x,  init_y         # Where the sudoku board is placed
+        self.cellwidth,      self.cellheight  = horjump, verjump        # Difference in curses grid representation and how we display
         self.current_column, self.current_row = 0,       0
         self.solved = False
-        self.relativeY = (self.sudoku_size+self.sudSqrt() )* self.yjump + self.init_y
 
-        self.bar_color    = curses.col["magenta-black"]
-        self.input_color  = curses.col["cyan-black"]
-        self.locked_color = curses.col["green-black"] 
+        self.relativeY = (self.sudoku_size+self.sudSqrt() )* self.cellheight + self.init_y # Saved variable to always have things printed below sudoku regardless of size
+
         self.moveCursor()
 
 
-       # check row
+    # Check if a row is correctly filled
     def checkRow(self, row):
         row_set = set()
         for num in self.board[row]:
@@ -143,7 +141,7 @@ class SudokuGame():
             return "correct"
  
 
-        # check column
+    # Check if a column is correctly filled
     def checkColumn(self, col):
         col_set = set()
         for row in self.board:
@@ -156,12 +154,10 @@ class SudokuGame():
             return "correct"
 
 
-    # check box
-    def checkBox(self, boxCol, boxRow):
-        
+    # Check if a box is correctly filled 
+    def checkBox(self, boxCol, boxRow):   
         box_set = set()
         box = self.accessBox(boxCol, boxRow)
-        
         for num in box:
             box_set.add(num)
         if 0 in box_set:
@@ -171,6 +167,7 @@ class SudokuGame():
         else:
             return "correct"
     
+    # Checks if the sudoku is solved correctly
     def checkSudoku(self):
         result = "correct"
         for row in range(self.sudoku_size):
@@ -199,7 +196,7 @@ class SudokuGame():
     
     
 
-
+    # Access an inner box in the sudoku
     def accessBox(self, boxColumn, boxRow):
         startCol = boxColumn * self.sudSqrt()
         startRow = boxRow    * self.sudSqrt()
@@ -211,58 +208,56 @@ class SudokuGame():
 
   
 
-    ''' Prints the board as it currently is.''' 
+    # Prints the board as it currently is. 
     def Print(self):
-
-        hor_square_bars = "  " + "-" * ((self.sudoku_size+self.sudSqrt()) * self.xjump - 1)
+        bar_color    = curses.col["magenta-black"]
+        input_color  = curses.col["cyan-black"]
+        locked_color = curses.col["green-black"] 
+        
+        hor_square_bars = "  " + "-" * ((self.sudoku_size+self.sudSqrt()) * self.cellwidth - 1)
         ver_bar = self.printfield("|")
         extraY = 1
-        
-        
-        screen.addstr(self.init_y*self.yjump, self.init_x, hor_square_bars, self.bar_color)        # prints the upper line
-        # prints everything on the board as well as the vertical bars and inner horizontal lines
+        screen.addstr(self.init_y*self.cellheight, self.init_x, hor_square_bars, bar_color)       
+        # prints every entry on the board as well as the vertical bars and inner horizontal lines
         for y in range(self.sudoku_size):
-            # Checking whether there needs to be a horizontal line
             if ((y+1) % self.sudSqrt() == 1) and (y+1 > self.sudSqrt()):
-                screen.addstr((self.init_y+y+extraY)*self.yjump, self.init_x, hor_square_bars, self.bar_color)
+                screen.addstr((self.init_y+y+extraY)*self.cellheight, self.init_x, hor_square_bars, bar_color)
                 extraY += 1
-            screen.addstr((self.init_y+y+extraY)*self.yjump, self.init_x, ver_bar, self.bar_color)   # Left-most bar
+            screen.addstr((self.init_y+y+extraY)*self.cellheight, self.init_x, ver_bar, bar_color)  
 
             for x in range(self.sudoku_size):
-                # Checks when to draw bar
-            
                 if ((x+1) % self.sudSqrt() == 1) and (x+1 > self.sudSqrt()):
                     screen.addstr(ver_bar, self.bar_color)
                 # Print either the emoji or whitespaces if cell has not been filled
                 if self.board[x][y].getNumber() != 0:
                     if self.cellEditable(x,y):
-                        color = self.input_color
+                        color = input_color
                     else:
-                        color = self.locked_color
+                        color = locked_color
                     screen.addstr(self.printfield(self.board[x][y].numAsEmoji()), color)
                 else:
                     screen.addstr(self.printfield(" "))
-            screen.addstr(ver_bar, self.bar_color)                                       # right-most bar
-        screen.addstr((self.init_y + self.sudoku_size + extraY)*self.yjump, self.init_x, hor_square_bars, self.bar_color) # lower line
+
+            screen.addstr(ver_bar, bar_color)                                      
+        screen.addstr((self.init_y + self.sudoku_size + extraY)*self.cellheight, self.init_x, hor_square_bars, bar_color) 
         
 
 
-    ''' Takes a sudoku cell and moves the blinking curser there showing player where they are about to enter emoji.
-        Also considers the "jumps" around lines and bars'''
+    # Takes a sudoku cell and moves the blinking curser there showing player where they are about to enter emoji.
     def sudokuToScreenCoord(self, current_x, current_y):
         outer_x = current_x + math.floor(current_x/math.sqrt(self.sudoku_size))
         outer_y = current_y + math.floor(current_y/math.sqrt(self.sudoku_size))
-        inner_x = self.xjump * outer_x + self.init_x + (self.xjump + 1) 
-        inner_y = self.yjump * outer_y + self.init_y + (self.yjump) 
+        inner_x = self.cellwidth * outer_x + self.init_x + (self.cellwidth + 1) 
+        inner_y = self.cellheight * outer_y + self.init_y + (self.cellheight) 
         return [inner_x, inner_y]
 
-    ''' Sets the cursor position based on current position on sudoku board    '''
+    #Sets the cursor position based on current position on sudoku board    
     def moveCursor(self):
         pos = self.sudokuToScreenCoord(self.current_column, self.current_row)
         screen.move(pos[1], pos[0])
 
-    ''' The whole update of the sudoku, such as moving on the table and playing an emoji '''
 
+    # Primarily prints keyboard instructions 
     def infoPrints(self, arg):
         infotext = curses.col["blue-black"]
         keycolor = curses.col["cyan-black"]
@@ -271,27 +266,32 @@ class SudokuGame():
             screen.addstr(key, keycolor)
             screen.addstr(instructions, infotext)
         screen.addstr(self.nameloc[1], self.nameloc[0], "SUDOKU", curses.col["white-magenta"])
-        pressInfo(5, "Enter    ", 'to insert emoji: ')
+        pressInfo(5, "Enter     ", 'to insert emoji: ')
         screen.addstr(N(arg).numAsEmoji(), curses.col["yellow-black"])
-        pressInfo(6, "Spacebar ", "to check if your sudoku is correct")
-        pressInfo(7, "q        ", " to exit window in focus")
+        pressInfo(6, "Spacebar  ", "to check if your sudoku is correct")
+        pressInfo(7, "Backspace ", "to delete entry")
 
+        pressInfo(8, "q         ", "to exit window in focus")
+
+    # Making a shorter version to display pop-up messages
     def messagePrint(self, message, color):
         screen.addstr(self.relativeY + 2, 15, message, curses.col[color])
 
-
+    # The play update. Takes care of most things such as printing, keyboard inputs and placing emojis.
     def update(self, arg):
-        
         screen.clear()
         screen.nodelay(True)
+
         self.moveCursor()
         self.infoPrints(arg)
         self.Print()
         self.moveCursor()
         event = screen.getch()
+
+        # q -> quit program
         if event == ord("q"): 
             return False
-            
+        # Move around in columns/rows with arrow keys (or wasd)
         elif event ==  curses.KEY_LEFT or event ==  ord("a"):
             self.current_column -= 1
             if self.current_column < 0:
@@ -308,18 +308,19 @@ class SudokuGame():
             self.current_row += 1
             if self.current_row > self.sudoku_size -1:
                 self.current_row = 0
-        elif event == 8:
+        # Backspace -> Delete cell input
+        elif event == 8: # 8 = backspace
             if self.cellEditable(self.current_column,self.current_row):     
                 self.board[self.current_column][self.current_row] = N(0)
             else:
                 self.messagePrint(f'Nice try. That\'s cheating ;-)', "red-black")
-                #screen.addstr(self.relativeY + 10, 15, f'Nice try. That\'s cheating ;-)', curses.color_pair(5))  
+        # Spacebar -> check if solution is correct
         elif event == 32:
             screen.nodelay(False)
             result = self.checkSudoku()
             self.isCorrect(result)
             event = screen.getch()
-        # If player chooses to use number keys to play with
+        # 0-9 numbers -> save arg as corresponding emoji
         elif 48 <= event <= 48 + 9:
             self.moveCursor()
             screen.nodelay(False)
@@ -327,50 +328,39 @@ class SudokuGame():
             if self.cellEditable(self.current_column,self.current_row):   
                 self.messagePrint('psst.. you are about to place a ', 'white-black' )
                 screen.addstr( f"{N(arg).numAsEmoji()}", curses.col["yellow-black"])                 
-                #screen.addstr(self.relativeY + 10, 15, f'psst.. you are about to place a \"{N(arg).numAsEmoji()}\" here')
             else:
                 self.messagePrint(f'Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)', 'red-black')
-                #screen.addstr(self.relativeY + 10, 15, f'Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)', curses.color_pair(5))
             self.Print()
             self.moveCursor()
             event = screen.getch()
 
-            
-        # When the player presses enter, play the emoji decided based on camera (or the keyboard number input)
+        # Enter -> play the emoji decided based on camera (or the keyboard number input)
         if event == 10:
             screen.nodelay(False)
             if self.cellEditable(self.current_column,self.current_row):                
                 self.board[self.current_column][self.current_row] = N(arg)
             else:
                 self.messagePrint("Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)", "red-black")
-                #screen.addstr(self.relativeY + 10, 15, "Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)", curses.color_pair(5))
                 event = screen.getch()
                 screen.nodelay(True)
-                #if event == 10:
-                 #   screen.nodelay(True)
             self.Print()   
         self.moveCursor()
 
+    # Check is cell is editable (cells with input from the original sudoku are not editable)
     def cellEditable(self, col, row):
         return self.boardCopy[col][row] == 0
 
-
+    # Shows message dependent on correctness of solution
     def isCorrect(self, result):
-        #ypos = (self.sudoku_size+self.sudSqrt()) * self.yjump + self.init_y + 14
         if result == "correct":
             self.messagePrint("Yay, you won!", "black-green")
-            #screen.addstr(self.relativeY + 14, 15, "Yay, you won!", curses.color_pair(7))
             self.solved = True
         elif result == "wrong":
             self.messagePrint("Whoops, there's something wrong here", "black-red")
-
-            #screen.addstr(self.relativeY + 14 , 15, "Whoops, there's something wrong here", curses.color_pair(8) )
         elif result == "unfinished":
             self.messagePrint("The sudoku is not finished, mate", "black-yellow")
         
             
-        
-    
     # Simply returns the square root of the size
     def sudSqrt(self):
         return int(math.sqrt(self.sudoku_size))
@@ -378,12 +368,12 @@ class SudokuGame():
     # Makes sure the input for a cell will stay somewhat in the middle. Flexible on cell-size and input-size
     def printfield(self, inp):
         inp = str(inp)
-        left  = " " * ( + int((self.xjump- len(str(inp)))/2))
-        right = " " * (self.xjump - len(left) - len(str(inp)))
+        left  = " " * ( + int((self.cellwidth- len(str(inp)))/2))
+        right = " " * (self.cellwidth - len(left) - len(str(inp)))
         return left + inp + right
 
+    # Saving sudoku to file to be able to continue later
     def saveGame(self):
-        # pickling the sudokus
         filename = 'continue_pickle'
         outfile = open(filename,'wb')
         self.convertToInts()
@@ -391,6 +381,7 @@ class SudokuGame():
         pickle.dump(save,outfile)
         outfile.close()
 
+    # Converts sudoku matrix entries to ints for saving sudoku pickle
     def convertToInts(self):
         for y in range(self.sudoku_size):
             for x in range(self.sudoku_size):
@@ -477,14 +468,12 @@ class SudokuReader():
         self.sudoku_list = None
         self.rand = rand
         self.read()
-
     def read(self):
         infile = open(self.filename,'rb')
         self.sudoku_list = pickle.load(infile)
         infile.close()
 
     def extract(self,  index = 0):
-        
         if self.rand:
             index = random.randint(0,len(self.sudoku_list)-1)
         self.sudoku = self.sudoku_list[index]
@@ -495,22 +484,24 @@ class SudokuReader():
 
 
 
-
+'''   The menu as the first thing that pops up when running the code  '''
 class Menu():
+    ''' The options in the menu '''
     class Option():
         def __init__(self, name, functionality):
             self.name = name
             self.functionality = functionality
             self.game = None
 
+        # Run the function corresponding to the chosen option
         def pickOption(self):
             self.functionality()
             
     def __init__(self, init_x, init_y):
-        self.locationpos = (10, 2)
+        self.locationpos = (10, 2) # Where it prints the "MENU"
+        # Where the menu itself starts
         self.init_x = init_x 
         self.init_y = init_y + self.locationpos[1]
-        screen.nodelay(False)
         
         newGame  = self.Option("New game",           self.startNewGame)
         contGame = self.Option("Continue last game", self.loadGame)
@@ -519,20 +510,23 @@ class Menu():
         self.options = [newGame, contGame, helpGame, quitGame]
         self.rowNr = 0
         self.STOP = False
+        screen.nodelay(False)
         self.startMenu()
         
-
-    def moveCursor(self):
+    # Keeps track of cursor position to run the right option function
+    def runMenu(self):
         screen.addstr(self.locationpos[1], self.locationpos[0], "MENU", curses.col["white-magenta"] | curses.A_BOLD)
         while True:
             screen.nodelay(True)
             event = screen.getch()
-
             screen.move(self.init_y + self.rowNr, self.init_x)
-            if event == ord("r"): # Shouldn't be used, but is there to make sure quitting is possible in the menu
+            # Shouldn't be used, but is there to make sure quitting is possible in the menu
+            if event == ord("r"): 
                 Quit()
+            # Enter -> run current option's functionality
             elif event == 10:
                 self.options[self.rowNr].pickOption()
+            # Keeps track of which option curser/user is it
             if event == curses.KEY_DOWN:
                 self.rowNr += 1
                 if self.rowNr >= len(self.options):
@@ -542,14 +536,16 @@ class Menu():
                 if self.rowNr < 0:
                     self.rowNr = len(self.options) -1
 
+    # When choosing the "New game" option
     def startNewGame(self):
         sudoku    = SudokuReader('sudoku_pickle', rand = True).extract()
         self.game = SudokuGame(sudoku,13,3 + self.locationpos[1], nameloc = self.locationpos)
         self.goGame()
   
  
-
+    # Runs the game
     def goGame(self):
+        # Shows an accurate loading screen (It takes a while to open the cam, so user knows that it is about to open) )
         screen.clear()
         screen.addstr(10, 50, "LOADING..", curses.col["green-black"])
         screen.addstr(11, 50, "████████      ]50% ", curses.col["green-black"])
@@ -565,12 +561,13 @@ class Menu():
         screen.refresh()
         
         run(self.game)
+        # Save the game is there is an unfinished/wrong sudoku
         if not self.game.solved:
             self.game.saveGame()
         quit()
 
     
-
+    # Loads a game instead of starting a new one. 
     def loadGame(self):
         try:
             continuedSudoku = SudokuReader('continue_pickle', rand = False).extract()
@@ -579,20 +576,21 @@ class Menu():
             self.game = SudokuGame(continuedSudoku,2,2, original_sud = originalSudoku)
             self.goGame()
         except Exception:
+            # If the player doesn't have an unfinished/wrong sudoku
             screen.clear()
             screen.addstr(10, 60, "There is no sudoku to continue")
             screen.nodelay(False)
             event = screen.getch()
-            if event == 10:
-                screen.clear()
-                self.startMenu()
-                return
+            screen.clear()
+            self.startMenu()
+            return
 
-
+    # For the "Quit" option
     def quitApp(self):
         self.STOP = True
         Quit()
 
+    # Displayed screen when user chooses the "how to play" option 
     def getHelp(self):
         screen.clear()
         instructions = ["To start a new game, go back and choose \"New game\"",
@@ -616,11 +614,10 @@ class Menu():
         event = screen.getch()
         screen.clear()
         self.startMenu()
-        
             
             
 
-
+    # Adds the menu options to the screen
     def addOptions(self):
         count = 0
         for option in self.options:
@@ -630,7 +627,7 @@ class Menu():
 
     def startMenu(self):
         self.addOptions()
-        self.moveCursor()
+        self.runMenu()
 
        
 
