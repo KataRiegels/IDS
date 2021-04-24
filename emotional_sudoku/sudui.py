@@ -69,9 +69,9 @@ class N:
         if number == 2:
             return ":o"
         if number == 3:
-            return ":p"
-        if number == 4:
             return ":*"
+        if number == 4:
+            return ":("
         else:
             return "ERROR"
 
@@ -376,7 +376,7 @@ class CamDetection():
         #initialize an array tocontain frame information
         self.emojidata = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
         #load our label dictionary
-        self.emoji_dict = {0: ":D", 1: ":O", 2:":P", 3:":*"}
+        self.emoji_dict = {0: ":D", 1: ":O", 2:":*", 3:":("}
 
         #start webcam
         for attempt in range(3):
