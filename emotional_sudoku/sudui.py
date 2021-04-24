@@ -394,8 +394,8 @@ class CamDetection():
     def __init__(self):
         self.result = 0
 
-        #load our model
-        self.emojimodel = tensorflow.keras.models.load_model('calamari.h5')
+        #load model for
+        self.emojimodel = tensorflow.keras.models.load_model('jarvis.h5')
         #initialize an array tocontain frame information
         self.emojidata = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
         #load our label dictionary
