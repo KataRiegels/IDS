@@ -209,7 +209,7 @@ class SudokuGame():
   
 
     # Prints the board as it currently is. 
-    def Print(self):
+    def printBoard(self):
         bar_color    = curses.col["magenta-black"]
         input_color  = curses.col["cyan-black"]
         locked_color = curses.col["green-black"] 
@@ -284,7 +284,7 @@ class SudokuGame():
 
         self.moveCursor()
         self.infoPrints(arg)
-        self.Print()
+        self.printBoard()
         self.moveCursor()
         event = screen.getch()
 
@@ -330,7 +330,7 @@ class SudokuGame():
                 screen.addstr( f"{N(arg).numAsEmoji()}", curses.col["yellow-black"])                 
             else:
                 self.messagePrint(f'Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)', 'red-black')
-            self.Print()
+            self.printBoard()
             self.moveCursor()
             event = screen.getch()
 
@@ -343,7 +343,7 @@ class SudokuGame():
                 self.messagePrint("Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)", "red-black")
                 event = screen.getch()
                 screen.nodelay(True)
-            self.Print()   
+            self.printBoard()   
         self.moveCursor()
 
     # Check is cell is editable (cells with input from the original sudoku are not editable)
