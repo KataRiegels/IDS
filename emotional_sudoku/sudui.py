@@ -632,7 +632,7 @@ class Menu():
        
 
 
-
+''' Runs the game and camera simultaniously'''
 def run(board):
     cam = CamDetection()
 
@@ -681,15 +681,3 @@ def gogo():
     quit()
 
 gogo()
-
-#run()
-
-
-"""
-''' Loading the sudoku pickle file '''
-filename = 'sudoku_pickle'
-infile = open(filename,'rb')
-sudoku_list = pickle.load(infile)
-infile.close()
-#print(sudoku_list[0])
-"""
