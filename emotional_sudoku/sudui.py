@@ -7,11 +7,7 @@ from cv2 import cv2
 import numpy as np
 
 import tensorflow 
-from tensorflow.keras.layers import (Conv2D, Dense, Dropout, Flatten, MaxPooling2D)
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import MaxPooling2D
+import tensorflow.keras
 
 import subprocess
 import math
@@ -395,7 +391,7 @@ class CamDetection():
         self.result = 0
 
         #load model for
-        self.emojimodel = tensorflow.keras.models.load_model('jarvis.h5')
+        self.emojimodel = tensorflow.keras.models.load_model('wasabi.h5')
         #initialize an array tocontain frame information
         self.emojidata = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
         #load our label dictionary
