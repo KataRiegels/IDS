@@ -1,10 +1,10 @@
 # Emotional Sudoku
 
-Emotional Sudoku is a game where you can play 4x4 sudoku using emotion detection from yor webcam.
+Emotional Sudoku is a game where you can play 4x4 sudoku using emotion detection from yor webcam. The detected emotions are converted to emojis that are used to fill out the sudoku grid.
 
 ## Requirements
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install 'insert required modules'.
 
 ```bash
 pip install foobar
@@ -12,16 +12,21 @@ pip install foobar
 
 ## Usage
 
-```python
-import foobar
+Running the program for default webcam:
 
-foobar.pluralize('word') # returns 'words'
-foobar.pluralize('goose') # returns 'geese'
-foobar.singularize('phenomena') # returns 'phenomenon'
+```bash
+python sudui.py
+```
+
+Running the program for specific webcam:
+
+```bash
+python sudui.py -c 1
 ```
 
 ## Authors
-Kata Mitzie Riegels
-Jonatan Heine Langer
-Matthias Kaas-Mason
+
+Kata Mitzie Riegels<br>
+Jonatan Heine Langer<br>
+Matthias Kaas-Mason<br>
 Stine Fohrmann
