@@ -30,7 +30,7 @@ or
 pip install tf-nightly
 ```
 
-### curses
+### curses for Windows
 
 ```bash
 pip install windows-curses
@@ -41,7 +41,7 @@ pip install windows-curses
 Running the program for default webcam:
 
 ```bash
-python sudui.py
+python emotionalsudoku.py
 ```
 
 Running the program for specific webcam:
@@ -49,7 +49,7 @@ Running the program for specific webcam:
 (substitute camNo with the number of your preferred camera)
 
 ```bash
-python sudui.py -c camNo
+python emotionalsudoku.py -c camNo
 ```
 
 ## Authors
