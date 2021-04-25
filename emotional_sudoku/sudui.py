@@ -11,8 +11,8 @@ import tensorflow.keras
 
 import subprocess
 import math
-import curses
 import time
+import curses
 import threading
 
 import pickle
@@ -402,76 +402,73 @@ class SudokuGame():
 class CamDetection():
         
     def __init__(self):
+
+        #initialize the result index as zero
         self.result = 0
+
+        #create a parser to allow arguments for which camera we are using
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', '--cam',
                     help='Choose which camera to use', dest = "camNr", default = 0)
-        
         args = parser.parse_args()
-        #load model for
+
+        #load trained model using tensorflow
         self.emojimodel = tensorflow.keras.models.load_model('wasabi.h5')
-        #initialize an array tocontain frame information
+        #initialize an array to contain information in the correct shape for our model
         self.emojidata = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
-        #load our label dictionary
+        #load a dictionary to contain the labels from our model
         self.emoji_dict = {0: ":D", 1: ":O", 2:":*", 3:":("}
 
-
+        #starts webcam, if multiple webcams are installed can switch between them
         self.cap = cv2.VideoCapture(args.camNr)
-        #start webcam
-        """
-        for attempt in range(3):
-            try:
-                self.cap = cv2.VideoCapture(attempt)
-                break
-            except Exception as e:
-                print(e)
-        """
+        #load our cascaceclassifier as frontal face
         self.facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-        self.font = cv2.FONT_HERSHEY_SIMPLEX
 
+        #initialize font and counter
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.counter = {0: 0, 1: 0, 2: 0, 3: 0}
 
-    def get_gpu_temp(self):
-        temp = subprocess.check_output(['vcgencmd measure_temp | egrep -o \'[0-9]*\.[0-9]*\''],
-                                        shell=True, universal_newlines=True)
-        return str(float(temp))
-
-
-    def thefunction(self):
-
-        # Find haar cascade to draw bounding box around face
+    def emotiondetection(self):
+        #save and flip the current frame from the camera
         ret, frame = self.cap.read()
         frame = cv2.flip(frame, 1)
         if not ret:
             return
+        
+        #render the frame in grayscale and use the HAARcascade to detect a face
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = self.facecasc.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
-        try:
+        try: #try function here to fix issue with resizeing image array when face is too close to camera
             for (x, y, w, h) in faces:
+                #draw a rectangle around the face detected in the haarcascade
                 self.emojiframe = cv2.rectangle(frame, (x-10, y-50), (x+w+10, y+h+30), (255, 0, 0), 2)
+
+                #create a cropped image frame and resize it
                 frame3 = frame[y-50:y + h + 10, x-10:x + w +10]
                 frame3 = cv2.resize(frame3, (224, 224))
+
+                #turn frame into a numpy array and normalize it
                 image_array2 = np.asarray(frame3)
                 self.emojidata[0]=(image_array2.astype(np.float32) / 127.0) - 1
+
+                #input the normalized image array data into the model and predict
                 emoji = self.emojimodel.predict(self.emojidata)
-                #print(emoji)
+                
+                #return the prediction index with the highest confidence value
                 emojiresult = np.argmax(emoji[0])
+
+                #begin counting up in the corresponding index in counter
                 self.counter[emojiresult] += 1
+
+                #display the result on screen
                 cv2.putText(frame, self.emoji_dict[int(emojiresult)], (x,y), self.font, 1.7, (0, 255, 0), 2, cv2.LINE_AA)
         except Exception as e:
             print(f'face resize error: {str(e)}')
-        '''
-        try:
-            path=os.path.join(mypath,n)
-            img=cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-            img=cv2.resize(img, (img_rows,img_cols))
 
-        except Exception as e:
-            print(str(e))
-        '''
-        try:
-            cv2.imshow('video', cv2.resize(frame, (800, 480), interpolation=None))   # interpolation = None?
+
+        try: #try loop to show video captured
+            cv2.imshow('video', cv2.resize(frame, (800, 480), interpolation=None))
         except Exception as e:
             print(f'face resize error 2: {str(e)}')
 
@@ -678,7 +675,7 @@ def run(board):
     #The thread that deals with the emotion detection
     def camPart():
         while True:
-            cam.thefunction()
+            cam.emotiondetection()
             result = cam.result
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
