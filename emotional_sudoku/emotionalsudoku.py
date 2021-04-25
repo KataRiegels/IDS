@@ -144,7 +144,7 @@ class Menu():
             continuedSudoku = SudokuReader('continue_pickle', rand = False).extract()
             originalSudoku = SudokuReader('continue_pickle', rand = False).extract(index = 1)
             os.remove("continue_pickle")
-            self.game = SudokuGame(continuedSudoku,2,2, original_sud = originalSudoku)
+            self.game = SudokuGame(continuedSudoku,13,3 + self.locationpos[1], original_sud = originalSudoku, nameloc = self.locationpos)
             self.goGame()
         except Exception:
             # If the player doesn't have an unfinished/wrong sudoku
@@ -166,7 +166,7 @@ class Menu():
                     "   and wait for the wanted emoji to be displayed below the board",
                     "To place displayed emoji at cursor, press enter",
                     "To move around the board, use arrow keys",
-                    "To delete emoji at cursor, press backspac",
+                    "To delete emoji at cursor, press backspace",
                     "To check if your solution is correct, press spacebar",
                     "To quit the game or camera window, press \"q\" in the focused window"]
         screen.addstr(5, 40, "How to play the game", curses.col["yellow-black"] | curses.A_BOLD | curses.A_UNDERLINE)
@@ -308,10 +308,14 @@ class SudokuGame():
                 self.current_row = 0
         # Backspace -> Delete cell input
         elif event == 8: # 8 = backspace
+            screen.nodelay(False)
             if self.cellEditable(self.current_column,self.current_row):     
                 self.board[self.current_column][self.current_row] = N(0)
             else:
-                self.messagePrint(f'Nice try. That\'s cheating ;-)', "red-black")
+                self.messagePrint(f'Nice try. That\'s cheating    ┻━┻ ~ /(ò_ó/)', "red-black")
+            self.printBoard()
+            self.moveCursor()
+            event = screen.getch()
         # Spacebar -> check if solution is correct
         elif event == 32:
             screen.nodelay(False)
