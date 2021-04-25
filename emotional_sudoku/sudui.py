@@ -409,7 +409,7 @@ class CamDetection():
         #create a parser to allow arguments for which camera we are using
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', '--cam',
-                    help='Choose which camera to use', dest = "camNr", default = 0)
+                    help='Choose which camera to use', dest = "camNo", default = 0)
         args = parser.parse_args()
 
         #load trained model using tensorflow
@@ -420,7 +420,7 @@ class CamDetection():
         self.emoji_dict = {0: ":D", 1: ":O", 2:":*", 3:":("}
 
         #starts webcam, if multiple webcams are installed can switch between them
-        self.cap = cv2.VideoCapture(args.camNr)
+        self.cap = cv2.VideoCapture(int(args.camNo))
         #load our cascaceclassifier as frontal face
         self.facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
