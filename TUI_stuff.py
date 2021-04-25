@@ -211,8 +211,6 @@ class DisplayJobsForm(ActionForm_edited):
         else:                                                                                            # In case no job from the list was selected
             self.parentApp.switchForm('NO_JOB_SELECTED')        
 
-"""klsdjflksj
-"""
 
 
 
