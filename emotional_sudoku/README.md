@@ -4,10 +4,36 @@ Emotional Sudoku is a game where you can play 4x4 sudoku using emotion detection
 
 ## Requirements
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install 'insert required modules'.
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the required modules (excluding packages part of Python's standard library):
+
+### OpenCV
 
 ```bash
-pip install foobar
+pip install cv2
+```
+
+### NumPy
+
+```bash
+pip install numpy
+```
+
+### TensorFlow
+
+```bash
+pip install tensorflow
+```
+
+or
+
+```bash
+pip install tf-nightly
+```
+
+### curses
+
+```bash
+pip install windows-curses
 ```
 
 ## Usage
