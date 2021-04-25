@@ -175,24 +175,26 @@ class getInputForm(ActionForm_edited):
         # Adding API response to lists
         for resp in self.response:                                                                            
             self.jobs_list.append(resp)                     # To get the list of jobs                                                             
-            self.job_list_titles.append(resp['title'])      # To display titles for user                                                     
+            '''self.job_list_titles.append(resp['title'])      # To display titles for user        '''                                             
         
         if len(self.jobs_list) < 1:                # If no jobs were found, show NO_JOBS error Form                                                            
             self.parentApp.switchForm("NO_JOBS")                                           
         else:                                      # If jobs were found, continue to next form
             # Setting the values of the job list widget                          
-            self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles                             
+            self.parentApp.getForm('SHOW_JOBS').jobs.values =[titles['title'] for titles in self.jobs_list]                             
+            
+            '''#self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles          '''                   
             self.parentApp.getForm('SHOW_JOBS').nr_of_jobs.value = str(len(self.jobs_list)) 
             # Used for resetting jobs lists things in case the user returned to choose new search terms
             self.parentApp.getForm('SHOW_JOBS').jobs.value = []
-            self.parentApp.getForm('SHOW_JOBS').chosen_job = []
+            '''self.parentApp.getForm('SHOW_JOBS').chosen_job = []'''    
 
             self.parentApp.switchForm("SHOW_JOBS")
   
 # Form that will display the jobs that match search criteria and saves information about a job the user wants to see
 class DisplayJobsForm(ActionForm_edited):
     def create (self):
-        self.chosen_job =  []    
+        '''#self.chosen_job =  []'''
         self.nr_of_jobs = self.add(nps.TitleText, w_id = "nr jobs", name = "Jobs found: ", editable = False, begin_entry_at=12, use_two_lines = False)
         self.jobs       = self.add(nps.TitleSelectOne, scroll_exit=True, max_height=11,  name='Jobs') # Widget that allows user to see and pick available jobs                                                    
         self.addButtons("continue", "return", "exit")
