@@ -637,7 +637,7 @@ class CamDetection():
 
 
 
-''' Runs the game and camera simultaniously'''
+''' Runs the game and camera simultaneously'''
 def run(board):
     cam = CamDetection()
 
