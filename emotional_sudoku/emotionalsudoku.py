@@ -47,13 +47,9 @@ def initializeCurses():
     curses.init_pair(11, curses.COLOR_WHITE,  curses.COLOR_MAGENTA)  
     curses.init_pair(12, curses.COLOR_WHITE,   curses.COLOR_BLACK)
     curses.init_pair(13, curses.COLOR_WHITE,   curses.COLOR_BLACK)
-
-    #if False:
-
+    
     if curses.can_change_color():
         curses.init_pair(12, 241,  curses.COLOR_BLACK) 
-
-
 
     colorpairs = {"blue-black"    : curses.color_pair(1),
                   "green-black"   : curses.color_pair(2),
@@ -555,7 +551,6 @@ class SudokuReader():
         if self.rand:
             index = random.randint(0,len(self.sudoku_list)-1)
         self.sudoku = self.sudoku_list[index]
-        print(self.sudoku)
         return self.sudoku
 
 
