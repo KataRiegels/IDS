@@ -541,6 +541,7 @@ class SudokuReader():
         self.sudoku_list = None
         self.rand = rand
         self.read()
+        
     def read(self):
         infile = open(self.filename,'rb')
         self.sudoku_list = pickle.load(infile)
