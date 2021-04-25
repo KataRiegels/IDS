@@ -4,11 +4,6 @@ import json, requests, pyperclip
 import npyscreen as nps
 
 
-
-
-
-
-
 # Takes a file with ascii art and converts it to a two dimensional list to be used for npyscreen's grid widget.
 def ascii_art(file):
     fil = open(f'{file}.txt', "r")
@@ -20,7 +15,7 @@ def ascii_art(file):
             
 
 
-#----------- Functions used to get API responses ------------------------------------------- 
+'''----------- Functions used to get API responses -------------------------------------------'''
 
 # Returns a list of jobs based on the search terms (kwargs) given
 def jobSearchAPI(**kwargs):
@@ -52,7 +47,7 @@ def checkMorePages(response, url_, search_choice):
 
 
 
-# ---------------------- Subclassing npyscreens forms -------------------------------------------------------------------------
+'''---------------------- Subclassing npyscreens forms -------------------------------------------------------------------------'''
 
 # Subclassing npyscreen's ActionFormV2 in order to remove the "cancel" and "ok" buttons and add our own buttons. Additional functionality added
 class ActionForm_edited(nps.ActionFormV2):
@@ -113,7 +108,7 @@ class ActionPopupWide_edited(ActionForm_edited):
 
 
 
-# -------------- APPS AND FORMS FOR THE TUI -----------------------------------------
+''' -------------- APPS AND FORMS FOR THE TUI -----------------------------------------'''
 
 # Defines the colors of the theme. Especially useful for choosing colors for a specific widget (e.g. making "Exit application" red)
 class DefaultTheme(nps.ThemeManager):
@@ -175,26 +170,22 @@ class getInputForm(ActionForm_edited):
         # Adding API response to lists
         for resp in self.response:                                                                            
             self.jobs_list.append(resp)                     # To get the list of jobs                                                             
-            '''self.job_list_titles.append(resp['title'])      # To display titles for user        '''                                             
         
         if len(self.jobs_list) < 1:                # If no jobs were found, show NO_JOBS error Form                                                            
             self.parentApp.switchForm("NO_JOBS")                                           
         else:                                      # If jobs were found, continue to next form
             # Setting the values of the job list widget                          
             self.parentApp.getForm('SHOW_JOBS').jobs.values =[titles['title'] for titles in self.jobs_list]                             
-            
-            '''#self.parentApp.getForm('SHOW_JOBS').jobs.values = self.job_list_titles          '''                   
+                               
             self.parentApp.getForm('SHOW_JOBS').nr_of_jobs.value = str(len(self.jobs_list)) 
             # Used for resetting jobs lists things in case the user returned to choose new search terms
-            self.parentApp.getForm('SHOW_JOBS').jobs.value = []
-            '''self.parentApp.getForm('SHOW_JOBS').chosen_job = []'''    
+            self.parentApp.getForm('SHOW_JOBS').jobs.value = []   
 
             self.parentApp.switchForm("SHOW_JOBS")
   
 # Form that will display the jobs that match search criteria and saves information about a job the user wants to see
 class DisplayJobsForm(ActionForm_edited):
     def create (self):
-        '''#self.chosen_job =  []'''
         self.nr_of_jobs = self.add(nps.TitleText, w_id = "nr jobs", name = "Jobs found: ", editable = False, begin_entry_at=12, use_two_lines = False)
         self.jobs       = self.add(nps.TitleSelectOne, scroll_exit=True, max_height=11,  name='Jobs') # Widget that allows user to see and pick available jobs                                                    
         self.addButtons("continue", "return", "exit")
@@ -212,8 +203,6 @@ class DisplayJobsForm(ActionForm_edited):
             self.parentApp.switchForm('JOB_INFO')
         else:                                                                                            # In case no job from the list was selected
             self.parentApp.switchForm('NO_JOB_SELECTED')        
-
-
 
 
 # Popup that shows information about the job the user picked in the DisplayJobsForm
@@ -238,7 +227,7 @@ class JobInformationForm(ActionPopupWide_edited):
         pyperclip.copy(self.job_url.value)      
 
 
-# --------------- ERROR FORMS --------------------------------------
+'''--------------- ERROR FORMS --------------------------------------'''
 
 # Popup in case there were no jobs matching the search criteria
 class NoJobsForm(ActionPopup_edited):
